@@ -4,24 +4,16 @@
  * Author: Jamius Siam
  * Since: 06/06/2026
  */
-import { loadPlugins } from "./loader.js";
 import { loadOrCreateConfigDir, loadOrCreateConfigFile, loadOrCreatePluginsDir } from "./setup.ts";
 import type { PluginTypeDeclaration } from "./@types/plugin.ts";
-import { getBuiltinPlugins } from "./plugins/config.ts";
-
-async function loadAllPlugins() {
-  const builtinPlugins = getBuiltinPlugins();
-  const externalPlugins = await loadPlugins();
-
-  return [...builtinPlugins, ...externalPlugins];
-}
+import { loadPlugins } from "./plugin-loader.ts";
 
 async function main(argv: string[]): Promise<void> {
   loadOrCreateConfigDir();
   loadOrCreatePluginsDir();
   const config = loadOrCreateConfigFile();
 
-  const plugins = await loadAllPlugins();
+  const plugins = await loadPlugins();
 
   const [command] = argv;
 

@@ -28,26 +28,26 @@ Follow these rules when editing code in this project.
 
 - `src/cli.ts` — entry point. Parses `argv`, ensures config dirs exist, dispatches commands (`searc`, `--help`, `--version`).
 - `src/setup.ts` — ensures `~/.sibyl` and `~/.sibyl/plugins` exist (created on every invocation).
-- `src/loader.ts` — discovers, imports, and **validates** plugins.
+- `src/plugin-loader.ts` — discovers, imports, and **validates** plugins.
 
 ### Plugin system (the core concept)
 
 Plugins live in `~/.sibyl/plugins/<name>/main.js` (note: `.js`, loaded at runtime via dynamic `import()`). A plugin module must provide **two exports**:
 
 1. `SilbylPlugin` — a declaration object with a non-empty `name: string` and `type: "search" | "fetch" | "ask" | "parseHtml"` (export name is literally `SilbylPlugin` — spelling is part of the contract).
-2. A **top-level function export** named per the type — `searchFn` / `fetchFn` / `askFn` / `parseHtmlFn`. `PLUGIN_FN_FIELD` in `loader.ts` maps `type` → this export name. Signatures (`src/@types/plugin.ts`):
+2. A **top-level function export** named per the type — `searchFn` / `fetchFn` / `askFn` / `parseHtmlFn`. `PLUGIN_FN_FIELD` in `plugin-loader.ts` maps `type` → this export name. Signatures (`src/@types/plugin.ts`):
    - `searchFn(query) => Promise<string>`
    - `fetchFn(url) => Promise<string>`
    - `askFn(parsedContent, query) => Promise<string>`
    - `parseHtmlFn(html) => Promise<string>`
 
-Key detail: the function is a **sibling module export**, not a field of `SilbylPlugin`. `loader.ts` reads `type` from `SilbylPlugin` but the fn from `plugin[fnField]`.
+Key detail: the function is a **sibling module export**, not a field of `SilbylPlugin`. `plugin-loader.ts` reads `type` from `SilbylPlugin` but the fn from `plugin[fnField]`.
 
 - `validatePlugin` checks: `SilbylPlugin` is an object, `name` is a non-empty string, `type` is valid, and `plugin[fnField]` is a function. Invalid plugins are skipped with a `console.warn`.
 - The loader normalizes each plugin to the internal `PluginTypeDeclaration` shape `{ name, type, fn }` — `name` comes from `SilbylPlugin.name` (not the folder), and the type-specific export is stored under `fn`.
 - Folder names starting with `builtin-` are reserved/skipped. `src/plugins/` exists for in-repo (builtin) plugins.
 
-When changing the plugin shape, update all three together: `src/@types/plugin.ts` (types), `loader.ts` (validation + `PLUGIN_FN_FIELD` + normalization), and the consumer in `cli.ts`.
+When changing the plugin shape, update all three together: `src/@types/plugin.ts` (types), `plugin-loader.ts` (validation + `PLUGIN_FN_FIELD` + normalization), and the consumer in `cli.ts`.
 
 ## Conventions
 

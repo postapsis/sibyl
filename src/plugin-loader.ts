@@ -7,6 +7,7 @@ import path from "path";
 import os from "os";
 import { pathToFileURL } from "url";
 import type { PluginTypeDeclaration } from "./@types/plugin.ts";
+import { getBuiltinPlugins } from "./plugins/config.ts";
 
 const PLUGIN_FN_FIELD = {
   search: "searchFn",
@@ -14,6 +15,13 @@ const PLUGIN_FN_FIELD = {
   ask: "askFn",
   parseHtml: "parseHtmlFn",
 } as const;
+
+export async function loadPlugins() {
+  const builtinPlugins = getBuiltinPlugins();
+  const externalPlugins = await loadExternalPlugins();
+
+  return [...builtinPlugins, ...externalPlugins];
+}
 
 function validatePlugin(plugin: any, folderName: string): PluginTypeDeclaration | null {
   if (!plugin?.SilbylPlugin || typeof plugin?.SilbylPlugin !== "object") {
@@ -53,7 +61,7 @@ function validatePlugin(plugin: any, folderName: string): PluginTypeDeclaration 
   return { name: pluginName, type: pluginType, fn: plugin[fnField] };
 }
 
-export async function loadPlugins() {
+async function loadExternalPlugins() {
   const pluginDir = path.join(os.homedir(), ".sibyl", "plugins");
   const result: PluginTypeDeclaration[] = [];
 
