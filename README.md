@@ -33,13 +33,13 @@ Plugins are loaded at runtime from your home config directory. `sibyl` creates t
         └── main.js
 ```
 
-To add a plugin, create a folder under `~/.sibyl/plugins/` and put a `main.js` inside it. The folder name becomes the plugin's name. (Names starting with `builtin-` are reserved and will be skipped.)
+To add a plugin, create a folder under `~/.sibyl/plugins/` and put a `main.js` inside it. (Folder names starting with `builtin-` are reserved and will be skipped.)
 
 ### The contract
 
 Every `main.js` must provide **two exports**:
 
-1. **`SilbylPlugin`** — a declaration object stating the plugin's `type`. One of `"search"`, `"fetch"`, `"ask"`, or `"parseHtml"`.
+1. **`SilbylPlugin`** — a declaration object with two fields: `name` (a non-empty string identifying the plugin) and `type`, one of `"search"`, `"fetch"`, `"ask"`, or `"parseHtml"`. See some examples below.
 2. **A function export named after the type** — `searchFn`, `fetchFn`, `askFn`, or `parseHtmlFn`. This is where your plugin's custom logic lives.
 
 | Type        | Function export | Signature                                                   |
@@ -49,12 +49,13 @@ Every `main.js` must provide **two exports**:
 | `ask`       | `askFn`         | `(parsedContent: string, query: string) => Promise<string>` |
 | `parseHtml` | `parseHtmlFn`   | `(html: string) => Promise<string>`                         |
 
-### Example: a search plugin
+### Example: A search plugin
 
 `~/.sibyl/plugins/my-search-plugin/main.js`
 
 ```js
 export const SilbylPlugin = {
+  name: "my-search-plugin",
   type: "search",
 };
 
@@ -64,12 +65,13 @@ export async function searchFn(query) {
 }
 ```
 
-### Example: a fetch plugin
+### Example: A fetch plugin
 
 `~/.sibyl/plugins/my-fetch-plugin/main.js`
 
 ```js
 export const SilbylPlugin = {
+  name: "my-fetch-plugin",
   type: "fetch",
 };
 
@@ -79,12 +81,13 @@ export async function fetchFn(url) {
 }
 ```
 
-### Example: an ask plugin
+### Example: An ask plugin
 
 `~/.sibyl/plugins/my-llm-ask-plugib/main.js`
 
 ```js
 export const SilbylPlugin = {
+  name: "my-ask-plugin",
   type: "ask",
 };
 
@@ -94,12 +97,13 @@ export async function askFn(parsedContent, query) {
 }
 ```
 
-### Example: a Html parse plugin
+### Example: A HTML parser plugin
 
 `~/.sibyl/plugins/my-parse-plugin/main.js`
 
 ```js
 export const SilbylPlugin = {
+  name: "my-parse-plugin",
   type: "parseHtml",
 };
 
@@ -115,6 +119,7 @@ When `sibyl` is run, each plugin is validated. A plugin is **skipped with a warn
 
 - the folder has no `main.js`,
 - `SilbylPlugin` is missing or not an object,
+- `name` is missing or an empty string,
 - `type` is not one of `search` / `fetch` / `ask` / `parseHtml`,
 - the matching function export (`searchFn` / `fetchFn` / `askFn` / `parseHtmlFn`) is missing or not a function.
 

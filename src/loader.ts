@@ -18,31 +18,39 @@ const PLUGIN_FN_FIELD = {
 function validatePlugin(plugin: any, folderName: string): PluginTypeDeclaration | null {
   if (!plugin?.SilbylPlugin || typeof plugin?.SilbylPlugin !== "object") {
     console.warn(
-      `Skipping plugin \`${folderName}\`: \`SilbylPlugin\` export missing or not an object.`,
+      `Skipping plugin in \`${folderName}\`: \`SilbylPlugin\` export missing or not an object.`,
     );
     return null;
   }
 
   const declaration = plugin.SilbylPlugin as Record<string, unknown>;
 
+  if (typeof declaration.name !== "string" || declaration.name.trim() === "") {
+    console.warn(
+      `Skipping plugin in \`${folderName}\`: missing or empty \`name\` in \`SilbylPlugin\`.`,
+    );
+    return null;
+  }
+
   if (typeof declaration.type !== "string" || !(declaration.type in PLUGIN_FN_FIELD)) {
     console.warn(
-      `Skipping plugin \`${folderName}\`: invalid \`type\` in \`SilbylPlugin\` (expected one of search, fetch, ask, parseHtml).`,
+      `Skipping plugin in \`${folderName}\`: invalid \`type\` in \`SilbylPlugin\` (expected one of search, fetch, ask, parseHtml).`,
     );
     return null;
   }
 
   const pluginType = declaration.type as keyof typeof PLUGIN_FN_FIELD;
+  const pluginName = declaration.name;
 
   const fnField = PLUGIN_FN_FIELD[pluginType];
   if (typeof plugin[fnField] !== "function") {
     console.warn(
-      `Skipping plugin \`${folderName}\`: missing \`${fnField}\` function for plugin type \`${pluginType}\`.`,
+      `Skipping plugin \`${pluginName}\`: missing \`${fnField}\` function for plugin type \`${pluginType}\`.`,
     );
     return null;
   }
 
-  return { name: folderName, type: pluginType, fn: plugin[fnField] };
+  return { name: pluginName, type: pluginType, fn: plugin[fnField] };
 }
 
 export async function loadPlugins() {
