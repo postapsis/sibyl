@@ -13,6 +13,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 No test runner is configured. `lint-staged` + Husky run Prettier on commit.
 
+# Code writing instruction
+
+Follow these rules when editing code in this project.
+
+1. Use TypeScript for new code
+2. Follow the existing code style and conventions
+3. Write clear and concise comments
+4. Format with Prettier and run ESLint after editing code.
+
 ## Architecture
 
 `sibyl` is a CLI web search/crawl tool for AI Agents (`bin: sibyl` → `dist/cli.js`) with a filesystem-based plugin system. Three source modules:
