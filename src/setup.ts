@@ -23,7 +23,10 @@ export function loadOrCreateConfigFile(): SibylConfig {
     writeDefaultSibylConfig();
   }
 
-  return JSON.parse(fs.readFileSync(configFile, "utf8")) as SibylConfig;
+  const config = JSON.parse(fs.readFileSync(configFile, "utf8")) as SibylConfig;
+  validateConfig(config);
+
+  return config;
 }
 
 export function loadOrCreatePluginsDir(): void {
@@ -40,23 +43,25 @@ export function writeDefaultSibylConfig(): void {
   console.log(`Creating config file at ${configFile}`);
 
   const sibylConfig: SibylConfig = {
-    plugins: [
-      {
-        type: "search",
-        name: "builtin-exa-search",
-      },
-      {
-        type: "fetch",
-        name: "builtin-exa-fetch",
-      },
-      {
-        type: "parseHtml",
-        name: "builtin-parseHtmlToMd",
-      },
-    ],
+    plugins: {
+      search: "builtin-exa-search",
+      fetch: "builtin-exa-fetch",
+      parseHtml: "builtin-parseHtmlToMd",
+    },
   };
 
   fs.writeFileSync(configFile, JSON.stringify(sibylConfig, null, 2));
+}
+
+function validateConfig(config: SibylConfig) {
+  for (const [type, name] of Object.entries(config.plugins)) {
+    if (typeof name !== "string" || name.trim() === "") {
+      console.error(
+        `Invalid configuration: plugin name for type \`${type}\` must be a non-empty string.`,
+      );
+      process.exit(1);
+    }
+  }
 }
 
 function isFileEmptySync(filePath: string): boolean {

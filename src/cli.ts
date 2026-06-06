@@ -5,7 +5,8 @@
  * Since: 06/06/2026
  */
 import { loadOrCreateConfigDir, loadOrCreateConfigFile, loadOrCreatePluginsDir } from "./setup.ts";
-import type { PluginTypeDeclaration } from "./@types/plugin.ts";
+import type { PluginTypeDeclaration, SearchPlugin } from "./@types/plugin.ts";
+import type { SibylConfig } from "./@types/sibyl-config.ts";
 import { loadPlugins } from "./plugin-loader.ts";
 
 async function main(argv: string[]): Promise<void> {
@@ -15,7 +16,7 @@ async function main(argv: string[]): Promise<void> {
 
   const plugins = await loadPlugins();
 
-  const [command] = argv;
+  const [command, ...rest] = argv;
 
   switch (command) {
     case undefined:
@@ -24,7 +25,15 @@ async function main(argv: string[]): Promise<void> {
       printHelp();
       break;
     case "search":
-      handleSearch(plugins);
+      const query = rest.join(" ").trim();
+
+      if (!query) {
+        console.error("Usage: sibyl search <query>");
+        process.exitCode = 1;
+        return;
+      }
+
+      handleSearch(plugins, config, query);
       break;
     case "--version":
     case "-v":
@@ -37,15 +46,29 @@ async function main(argv: string[]): Promise<void> {
   }
 }
 
-function handleSearch(plugins: PluginTypeDeclaration[]) {
-  for (const searchPlugin of plugins) {
-    if (searchPlugin.type !== "search") continue;
+function handleSearch(plugins: PluginTypeDeclaration[], config: SibylConfig, query: string) {
+  const searchPluginName = config.plugins.search;
 
-    searchPlugin
-      .fn("world")
-      .then((result) => console.log(result))
-      .catch((error) => console.error(`Error executing plugin: ${error}`));
+  if (!searchPluginName) {
+    console.error("No search plugin configured in `~/.sibyl/config.json`");
+    process.exitCode = 1;
+    return;
   }
+
+  const searchPlugin = plugins.find(
+    (plugin) => plugin.type === "search" && plugin.name === searchPluginName,
+  ) as SearchPlugin;
+
+  if (!searchPlugin) {
+    console.error(`Configured search plugin \`${searchPluginName}\` not found`);
+    process.exitCode = 1;
+    return;
+  }
+
+  searchPlugin
+    .fn(query)
+    .then((result) => console.log(result))
+    .catch((error) => console.error(`Error executing ${searchPlugin.name}: ${error}`));
 }
 
 function printHelp(): void {
