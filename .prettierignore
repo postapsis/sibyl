@@ -1,0 +1,16 @@
+node_modules
+dist
+build
+coverage
+.next
+out
+.vite
+.turbo
+.cache
+
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+.env
+.env.*

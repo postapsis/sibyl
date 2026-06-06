@@ -2,9 +2,29 @@
   "name": "sibyl",
   "version": "0.1.0",
   "description": "",
-  "main": "index.js",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "sibyl": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "tsx src/cli.ts",
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": "prettier --write",
+    "*.{json,css,scss,md,yml,yaml,html}": "prettier --write"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "keywords": [],
   "author": {
@@ -12,5 +32,17 @@
     "email": "dev@postapsis.com",
     "url": "https://postapsis.com"
   },
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^25.9.1",
+    "eslint": "^10.4.1",
+    "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.6",
+    "prettier": "3.8.3",
+    "tsx": "^4.22.3",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.60.0"
+  }
 }
