@@ -6,6 +6,7 @@ import type { PluginTypeDeclaration } from "../@types/plugin.ts";
 import { searchFn as searchFnExa } from "./builtin-exa-search/main.ts";
 import { fetchFn as fetchFnExa } from "./builtin-exa-fetch/main.ts";
 import { searchFn as searchFnBrightData } from "./builtin-brightdata-search/main.ts";
+import { fetchFn as fetchFnBrightData } from "./builtin-brightdata-fetch/main.ts";
 
 export function getBuiltinPlugins(): PluginTypeDeclaration[] {
   const exaSearch: PluginTypeDeclaration = {
@@ -26,5 +27,11 @@ export function getBuiltinPlugins(): PluginTypeDeclaration[] {
     fn: searchFnBrightData,
   };
 
-  return [exaSearch, exaFetch, brightDataSearch];
+  const brightDataFetch: PluginTypeDeclaration = {
+    type: "fetch",
+    name: "builtin-brightdata-fetch",
+    fn: fetchFnBrightData,
+  };
+
+  return [exaSearch, exaFetch, brightDataSearch, brightDataFetch];
 }
