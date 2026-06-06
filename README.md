@@ -39,14 +39,15 @@ To add a plugin, create a folder under `~/.sibyl/plugins/` and put a `main.js` i
 
 Every `main.js` must provide **two exports**:
 
-1. **`SilbylPlugin`** — a declaration object stating the plugin's `type`. One of `"search"`, `"fetch"`, or `"ask"`.
-2. **A function export named after the type** — `searchFn`, `fetchFn`, or `askFn`. This is where your plugin's custom logic lives.
+1. **`SilbylPlugin`** — a declaration object stating the plugin's `type`. One of `"search"`, `"fetch"`, `"ask"`, or `"parseHtml"`.
+2. **A function export named after the type** — `searchFn`, `fetchFn`, `askFn`, or `parseHtmlFn`. This is where your plugin's custom logic lives.
 
-| Type     | Function export | Signature                                         |
-| -------- | --------------- | ------------------------------------------------- |
-| `search` | `searchFn`      | `(query: string) => Promise<string>`              |
-| `fetch`  | `fetchFn`       | `(url: string) => Promise<string>`                |
-| `ask`    | `askFn`         | `(url: string, query: string) => Promise<string>` |
+| Type        | Function export | Signature                                                   |
+| ----------- | --------------- | ----------------------------------------------------------- |
+| `search`    | `searchFn`      | `(query: string) => Promise<string>`                        |
+| `fetch`     | `fetchFn`       | `(url: string) => Promise<string>`                          |
+| `ask`       | `askFn`         | `(parsedContent: string, query: string) => Promise<string>` |
+| `parseHtml` | `parseHtmlFn`   | `(html: string) => Promise<string>`                         |
 
 ### Example: a search plugin
 
@@ -87,9 +88,24 @@ export const SilbylPlugin = {
   type: "ask",
 };
 
-export async function askFn(url, query) {
-  // ...fetch url, answer query against it with an LLM...
-  return `Answer to "${query}" from ${url}`;
+export async function askFn(parsedContent, query) {
+  // ...answer query against the parsed content with an LLM...
+  return `Answer to "${query}"`;
+}
+```
+
+### Example: a Html parse plugin
+
+`~/.sibyl/plugins/my-parse-plugin/main.js`
+
+```js
+export const SilbylPlugin = {
+  type: "parseHtml",
+};
+
+export async function parseHtmlFn(html) {
+  // ...convert raw html into token-efficient markdown...
+  return `# Parsed content`;
 }
 ```
 
@@ -99,8 +115,8 @@ When `sibyl` is run, each plugin is validated. A plugin is **skipped with a warn
 
 - the folder has no `main.js`,
 - `SilbylPlugin` is missing or not an object,
-- `type` is not one of `search` / `fetch` / `ask`,
-- the matching function export (`searchFn` / `fetchFn` / `askFn`) is missing or not a function.
+- `type` is not one of `search` / `fetch` / `ask` / `parseHtml`,
+- the matching function export (`searchFn` / `fetchFn` / `askFn` / `parseHtmlFn`) is missing or not a function.
 
 ## Contribution
 

@@ -25,11 +25,12 @@ No test runner is configured. `lint-staged` + Husky run Prettier on commit.
 
 Plugins live in `~/.sibyl/plugins/<name>/main.js` (note: `.js`, loaded at runtime via dynamic `import()`). A plugin module must provide **two exports**:
 
-1. `SilbylPlugin` — a declaration object with `type: "search" | "fetch" | "ask"` (export name is literally `SilbylPlugin` — spelling is part of the contract).
-2. A **top-level function export** named per the type — `searchFn` / `fetchFn` / `askFn`. `PLUGIN_FN_FIELD` in `loader.ts` maps `type` → this export name. Signatures (`src/@types/plugin.ts`):
+1. `SilbylPlugin` — a declaration object with `type: "search" | "fetch" | "ask" | "parseHtml"` (export name is literally `SilbylPlugin` — spelling is part of the contract).
+2. A **top-level function export** named per the type — `searchFn` / `fetchFn` / `askFn` / `parseHtmlFn`. `PLUGIN_FN_FIELD` in `loader.ts` maps `type` → this export name. Signatures (`src/@types/plugin.ts`):
    - `searchFn(query) => Promise<string>`
    - `fetchFn(url) => Promise<string>`
-   - `askFn(url, query) => Promise<string>`
+   - `askFn(parsedContent, query) => Promise<string>`
+   - `parseHtmlFn(html) => Promise<string>`
 
 Key detail: the function is a **sibling module export**, not a field of `SilbylPlugin`. `loader.ts` reads `type` from `SilbylPlugin` but the fn from `plugin[fnField]`.
 

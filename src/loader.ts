@@ -12,6 +12,7 @@ const PLUGIN_FN_FIELD = {
   search: "searchFn",
   fetch: "fetchFn",
   ask: "askFn",
+  parseHtml: "parseHtmlFn",
 } as const;
 
 function validatePlugin(plugin: any, folderName: string): PluginTypeDeclaration | null {
@@ -26,7 +27,7 @@ function validatePlugin(plugin: any, folderName: string): PluginTypeDeclaration 
 
   if (typeof declaration.type !== "string" || !(declaration.type in PLUGIN_FN_FIELD)) {
     console.warn(
-      `Skipping plugin \`${folderName}\`: invalid \`type\` in \`SilbylPlugin\` (expected one of search, fetch, ask).`,
+      `Skipping plugin \`${folderName}\`: invalid \`type\` in \`SilbylPlugin\` (expected one of search, fetch, ask, parseHtml).`,
     );
     return null;
   }

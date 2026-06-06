@@ -17,7 +17,13 @@ export interface FetchPlugin {
 export interface AskPlugin {
   name: string;
   type: "ask";
-  fn: (url: string, query: string) => Promise<string>;
+  fn: (parsedContent: string, query: string) => Promise<string>;
 }
 
-export type PluginTypeDeclaration = SearchPlugin | FetchPlugin | AskPlugin;
+export interface ParseHtmlPlugin {
+  name: string;
+  type: "parseHtml";
+  fn: (html: string) => Promise<string>;
+}
+
+export type PluginTypeDeclaration = SearchPlugin | FetchPlugin | AskPlugin | ParseHtmlPlugin;
