@@ -61,9 +61,10 @@ When changing the plugin shape, update all three together: `src/@types/plugin.ts
 
 ### Config (`~/.sibyl/config.json`)
 
-Shape: `SibylConfig` (`src/@types/sibyl-config.ts`) — `{ plugins: Partial<Record<PluginType, string>> }`, i.e. one entry per plugin type mapping `type` → plugin name (e.g. `{ "plugins": { "search": "builtin-exa-search" } }`). Keying by type structurally enforces at most one plugin per type.
+Shape: `SibylConfig` (`src/@types/sibyl-config.ts`) — `{ plugins: Partial<Record<PluginType, string>>, variables: { name, value }[] }`. `plugins` maps `type` → plugin name (e.g. `{ "search": "builtin-exa-search" }`); keying by type structurally enforces at most one plugin per type. `variables` is a list of `{ name, value }` pairs injected into `process.env`.
 
-- `loadOrCreateConfigFile()` (`setup.ts`) writes a default config (`writeDefaultSibylConfig`) when the file is missing or empty, then parses and validates it.
+- `loadOrCreateConfigFile()` (`setup.ts`) writes a default config (`writeDefaultSibylConfig`) when the file is missing or empty, then parses, validates, and injects variables.
+- `injectConfigVariables()` (`setup.ts`) sets `process.env[name] = value` for each config variable. **Config wins over the environment** — a variable named in config overrides any existing env var; names absent from config fall back to their existing env value. (Plugins like `builtin-exa-search` read `process.env.EXA_API_KEY` at call time, so they pick up either source.)
 - `validateConfig()` checks each entry's name is a non-empty string; on failure it `console.error`s and `process.exit(1)` (hard exit, not a skip-with-warning like plugin loading).
 - Plugin selection: `loadPlugins()` loads _all_ available plugins (builtins + disk), then `cli.ts` picks the one to run **by name from config** — e.g. the `search` command looks up `config.plugins.search` and finds the loaded plugin whose `type === "search"` and `name` matches. Missing config entry or no matching loaded plugin → `console.error` + non-zero exit.
 

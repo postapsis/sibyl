@@ -22,6 +22,32 @@ npm install -g @postapsis/sibyl
 | `--help`, `-h`    | Show help.                                                                                                                |
 | `--version`, `-v` | Show version.                                                                                                             |
 
+## Configuration
+
+`sibyl` reads its config from `~/.sibyl/config.json`, created with sensible defaults on first run. It has two sections:
+
+```json
+{
+  "plugins": {
+    "search": "builtin-exa-search",
+    "fetch": "builtin-exa-fetch",
+    "parseHtml": "builtin-parseHtmlToMd"
+  },
+
+  "variables": [{ "name": "EXA_API_KEY", "value": "your-api-key" }]
+}
+```
+
+### `plugins`
+
+Maps each plugin type (`search` / `fetch` / `ask` / `parseHtml`) to the **name** of the plugin to use for it. Exactly one plugin per type. The value must match a plugin's `name` (a builtin like `builtin-exa-search`, or one of your custom written one!).
+
+### `variables`
+
+A list of `{ name, value }` pairs injected into the process environment at startup. Use this to provide secrets and settings (e.g. API keys) that plugins read via `process.env`.
+
+Precedence: **config wins over the environment.** A variable defined here overrides any existing environment variable of the same name; anything not listed here falls back to the real environment. For example, a plugin reading `process.env.EXA_API_KEY` gets the config value if present, otherwise whatever was exported in your shell.
+
 ## Creating a Plugin
 
 Plugins are loaded at runtime from your home config directory. `sibyl` creates these directories on first run:

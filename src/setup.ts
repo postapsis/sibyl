@@ -25,8 +25,17 @@ export function loadOrCreateConfigFile(): SibylConfig {
 
   const config = JSON.parse(fs.readFileSync(configFile, "utf8")) as SibylConfig;
   validateConfig(config);
+  injectConfigVariables(config);
 
   return config;
+}
+
+// Inject config variables into process.env. Config values take precedence;
+// any name absent from config keeps its existing env value.
+function injectConfigVariables(config: SibylConfig): void {
+  for (const variable of config.variables ?? []) {
+    process.env[variable.name] = variable.value;
+  }
 }
 
 export function loadOrCreatePluginsDir(): void {
@@ -48,6 +57,7 @@ export function writeDefaultSibylConfig(): void {
       fetch: "builtin-exa-fetch",
       parseHtml: "builtin-parseHtmlToMd",
     },
+    variables: [],
   };
 
   fs.writeFileSync(configFile, JSON.stringify(sibylConfig, null, 2));

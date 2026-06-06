@@ -2,8 +2,6 @@
  * Author: Jamius Siam
  * Since: 06/06/2026
  */
-import * as process from "node:process";
-
 interface ExaResult {
   title: string | null;
   url: string;
