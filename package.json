@@ -7,6 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "POST/APSIS <dev@postapsis.com>",
+  "author": {
+    "name": "POST/APSIS",
+    "email": "dev@postapsis.com",
+    "url": "https://postapsis.com"
+  },
   "license": "Apache-2.0"
 }
