@@ -7,6 +7,7 @@ import { searchFn as searchFnExa } from "./builtin-exa-search/main.ts";
 import { fetchFn as fetchFnExa } from "./builtin-exa-fetch/main.ts";
 import { searchFn as searchFnBrightData } from "./builtin-brightdata-search/main.ts";
 import { fetchFn as fetchFnBrightData } from "./builtin-brightdata-fetch/main.ts";
+import { parseHtmlFn as parseHtmlFnToMd } from "./builtin-parseHtmlToMd/main.ts";
 
 export function getBuiltinPlugins(): PluginTypeDeclaration[] {
   const exaSearch: PluginTypeDeclaration = {
@@ -33,5 +34,11 @@ export function getBuiltinPlugins(): PluginTypeDeclaration[] {
     fn: fetchFnBrightData,
   };
 
-  return [exaSearch, exaFetch, brightDataSearch, brightDataFetch];
+  const parseHtmlToMd: PluginTypeDeclaration = {
+    type: "parseHtml",
+    name: "builtin-parseHtmlToMd",
+    fn: parseHtmlFnToMd,
+  };
+
+  return [exaSearch, exaFetch, brightDataSearch, brightDataFetch, parseHtmlToMd];
 }

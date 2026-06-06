@@ -5,7 +5,12 @@
  * Since: 06/06/2026
  */
 import { loadOrCreateConfigDir, loadOrCreateConfigFile, loadOrCreatePluginsDir } from "./setup.ts";
-import type { FetchPlugin, PluginTypeDeclaration, SearchPlugin } from "./@types/plugin.ts";
+import type {
+  FetchPlugin,
+  ParseHtmlPlugin,
+  PluginTypeDeclaration,
+  SearchPlugin,
+} from "./@types/plugin.ts";
 import type { SibylConfig } from "./@types/sibyl-config.ts";
 import { loadPlugins } from "./plugin-loader.ts";
 import { isValidHttpUrl } from "./utils.ts";
@@ -88,7 +93,7 @@ function handleSearch(plugins: PluginTypeDeclaration[], config: SibylConfig, que
     });
 }
 
-function handleFetch(plugins: PluginTypeDeclaration[], config: SibylConfig, url: string) {
+async function handleFetch(plugins: PluginTypeDeclaration[], config: SibylConfig, url: string) {
   const fetchPluginName = config.plugins.fetch;
 
   if (!fetchPluginName) {
@@ -105,10 +110,28 @@ function handleFetch(plugins: PluginTypeDeclaration[], config: SibylConfig, url:
     process.exit(1);
   }
 
-  fetchPlugin
-    .fn(url)
-    .then((result) => console.log(result))
-    .catch((error) => console.error(`Error fetching using ${fetchPlugin.name}: ${error}`));
+  const parseHtmlPluginName = config.plugins.parseHtml;
+  let parseHtmlPlugin: ParseHtmlPlugin | undefined;
+
+  if (parseHtmlPluginName) {
+    parseHtmlPlugin = plugins.find(
+      (plugin) => plugin.type === "parseHtml" && plugin.name === parseHtmlPluginName,
+    ) as ParseHtmlPlugin;
+
+    if (!parseHtmlPlugin) {
+      console.error(`Configured parseHtml plugin \`${parseHtmlPluginName}\` not found`);
+      process.exit(1);
+    }
+  }
+
+  try {
+    const html = await fetchPlugin.fn(url);
+    const content = parseHtmlPlugin ? await parseHtmlPlugin.fn(html) : html;
+    console.log(content);
+  } catch (error) {
+    console.error(`Error fetching using ${fetchPlugin.name}: ${error}`);
+    process.exit(1);
+  }
 }
 
 function printHelp(): void {
