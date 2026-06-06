@@ -17,7 +17,7 @@ export interface FetchPlugin {
 export interface AskPlugin {
   name: string;
   type: "ask";
-  fn: (parsedContent: string, query: string) => Promise<string>;
+  fn: (src: string, query: string) => Promise<string>;
 }
 
 export interface ParseHtmlPlugin {
