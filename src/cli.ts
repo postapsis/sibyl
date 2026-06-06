@@ -5,12 +5,13 @@
  * Since: 06/06/2026
  */
 import { loadPlugins } from "./loader.js";
-import { loadOrCreateConfigDir, loadOrCreatePluginsDir } from "./setup.ts";
+import { loadOrCreateConfigDir, loadOrCreateConfigFile, loadOrCreatePluginsDir } from "./setup.ts";
 import type { PluginTypeDeclaration } from "./@types/plugin.ts";
 
 async function main(argv: string[]): Promise<void> {
   loadOrCreateConfigDir();
   loadOrCreatePluginsDir();
+  const config = loadOrCreateConfigFile();
   const plugins = await loadPlugins();
 
   const [command] = argv;

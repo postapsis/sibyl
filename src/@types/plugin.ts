@@ -27,3 +27,5 @@ export interface ParseHtmlPlugin {
 }
 
 export type PluginTypeDeclaration = SearchPlugin | FetchPlugin | AskPlugin | ParseHtmlPlugin;
+
+export type PluginType = "search" | "fetch" | "ask" | "parseHtml";
