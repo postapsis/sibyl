@@ -10,3 +10,5 @@ export function isValidHttpUrl(value: string): boolean {
   const protocol = new URL(value).protocol;
   return protocol === "http:" || protocol === "https:";
 }
+
+export const exit = (code?: number): never => process.exit(code);

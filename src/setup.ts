@@ -6,6 +6,7 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 import type { SibylConfig } from "./@types/sibyl-config.ts";
+import { exit } from "./utils.ts";
 
 export function loadOrCreateConfigDir(): void {
   const configDir = path.join(os.homedir(), ".sibyl");
@@ -69,7 +70,8 @@ function validateConfig(config: SibylConfig) {
       console.error(
         `Invalid configuration: plugin name for type \`${type}\` must be a non-empty string.`,
       );
-      process.exit(1);
+
+      exit(1);
     }
   }
 }
