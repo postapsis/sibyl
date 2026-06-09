@@ -7,7 +7,7 @@
 import { loadOrCreateConfigDir, loadOrCreateConfigFile, loadOrCreatePluginsDir } from "./setup.ts";
 import type {
   FetchPlugin,
-  ParseHtmlPlugin,
+  ParsePlugin,
   PluginTypeDeclaration,
   SearchPlugin,
 } from "./@types/plugin.ts";
@@ -110,16 +110,16 @@ async function handleFetch(plugins: PluginTypeDeclaration[], config: SibylConfig
     process.exit(1);
   }
 
-  const parseHtmlPluginName = config.plugins.parseHtml;
-  let parseHtmlPlugin: ParseHtmlPlugin | undefined;
+  const parseHtmlPluginName = config.plugins.parse;
+  let parseHtmlPlugin: ParsePlugin | undefined;
 
   if (parseHtmlPluginName) {
     parseHtmlPlugin = plugins.find(
-      (plugin) => plugin.type === "parseHtml" && plugin.name === parseHtmlPluginName,
-    ) as ParseHtmlPlugin;
+      (plugin) => plugin.type === "parse" && plugin.name === parseHtmlPluginName,
+    ) as ParsePlugin;
 
     if (!parseHtmlPlugin) {
-      console.error(`Configured parseHtml plugin \`${parseHtmlPluginName}\` not found`);
+      console.error(`Configured parse plugin \`${parseHtmlPluginName}\` not found`);
       process.exit(1);
     }
   }

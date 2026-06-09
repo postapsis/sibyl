@@ -25,7 +25,7 @@ import { exit } from "./utils.ts";
 const DEFAULT_PLUGINS = {
   search: "builtin-exa-search",
   fetch: "builtin-exa-fetch",
-  parseHtml: "builtin-parseHtmlToMd",
+  parse: "builtin-parse-HtmlToMd",
 };
 
 let home: string;

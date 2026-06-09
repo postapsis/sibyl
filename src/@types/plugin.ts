@@ -20,12 +20,12 @@ export interface AskPlugin {
   fn: (src: string, query: string) => Promise<string>;
 }
 
-export interface ParseHtmlPlugin {
+export interface ParsePlugin {
   name: string;
-  type: "parseHtml";
+  type: "parse";
   fn: (html: string) => Promise<string>;
 }
 
-export type PluginTypeDeclaration = SearchPlugin | FetchPlugin | AskPlugin | ParseHtmlPlugin;
+export type PluginTypeDeclaration = SearchPlugin | FetchPlugin | AskPlugin | ParsePlugin;
 
-export type PluginType = "search" | "fetch" | "ask" | "parseHtml";
+export type PluginType = "search" | "fetch" | "ask" | "parse";

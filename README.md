@@ -31,7 +31,7 @@ npm install -g @postapsis/sibyl
   "plugins": {
     "search": "builtin-exa-search",
     "fetch": "builtin-exa-fetch",
-    "parseHtml": "builtin-parseHtmlToMd"
+    "parse": "builtin-parse-HtmlToMd"
   },
 
   "variables": [{ "name": "EXA_API_KEY", "value": "your-api-key" }]
@@ -40,7 +40,7 @@ npm install -g @postapsis/sibyl
 
 ### `plugins`
 
-Maps each plugin type (`search` / `fetch` / `ask` / `parseHtml`) to the **name** of the plugin to use for it. Exactly one plugin per type. The value must match a plugin's `name` (a builtin like `builtin-exa-search`, or one of your custom written one!).
+Maps each plugin type (`search` / `fetch` / `ask` / `parse`) to the **name** of the plugin to use for it. Exactly one plugin per type. The value must match a plugin's `name` (a builtin like `builtin-exa-search`, or one of your custom written one!).
 
 ### `variables`
 
@@ -63,32 +63,34 @@ To add a plugin, create a folder under `~/.sibyl/plugins/` and put a `main.js` i
 
 ### The contract
 
-Every `main.js` must provide **two exports**:
+Every `main.js` must provide a **single export**: `SilbylPlugin` — a declaration object with three fields:
 
-1. **`SilbylPlugin`** — a declaration object with two fields: `name` (a non-empty string identifying the plugin) and `type`, one of `"search"`, `"fetch"`, `"ask"`, or `"parseHtml"`. See some examples below.
-2. **A function export named after the type** — `searchFn`, `fetchFn`, `askFn`, or `parseHtmlFn`. This is where your plugin's custom logic lives.
+1. **`name`** — a non-empty string identifying the plugin.
+2. **`type`** — one of `"search"`, `"fetch"`, `"ask"`, or `"parse"`.
+3. **`fn`** — the function where your plugin's custom logic lives. Its signature depends on the `type`:
 
-| Type        | Function export | Signature                                                   |
-| ----------- | --------------- | ----------------------------------------------------------- |
-| `search`    | `searchFn`      | `(query: string) => Promise<string>`                        |
-| `fetch`     | `fetchFn`       | `(url: string) => Promise<string>`                          |
-| `ask`       | `askFn`         | `(parsedContent: string, query: string) => Promise<string>` |
-| `parseHtml` | `parseHtmlFn`   | `(html: string) => Promise<string>`                         |
+| Type     | `fn` signature                                              |
+| -------- | ----------------------------------------------------------- |
+| `search` | `(query: string) => Promise<string>`                        |
+| `fetch`  | `(url: string) => Promise<string>`                          |
+| `ask`    | `(parsedContent: string, query: string) => Promise<string>` |
+| `parse`  | `(html: string) => Promise<string>`                         |
 
 ### Example: A search plugin
 
 `~/.sibyl/plugins/my-search-plugin/main.js`
 
 ```js
-export const SilbylPlugin = {
-  name: "my-search-plugin",
-  type: "search",
-};
-
-export async function searchFn(query) {
+async function searchFn(query) {
   // ...do the search...
   return `Results for: ${query}`;
 }
+
+export const SilbylPlugin = {
+  name: "my-search-plugin",
+  type: "search",
+  fn: searchFn,
+};
 ```
 
 ### Example: A fetch plugin
@@ -96,15 +98,16 @@ export async function searchFn(query) {
 `~/.sibyl/plugins/my-fetch-plugin/main.js`
 
 ```js
-export const SilbylPlugin = {
-  name: "my-fetch-plugin",
-  type: "fetch",
-};
-
-export async function fetchFn(url) {
+async function fetchFn(url) {
   // fetch html for the url
   return `HTML Content`;
 }
+
+export const SilbylPlugin = {
+  name: "my-fetch-plugin",
+  type: "fetch",
+  fn: fetchFn,
+};
 ```
 
 ### Example: An ask plugin
@@ -112,15 +115,16 @@ export async function fetchFn(url) {
 `~/.sibyl/plugins/my-llm-ask-plugib/main.js`
 
 ```js
-export const SilbylPlugin = {
-  name: "my-ask-plugin",
-  type: "ask",
-};
-
-export async function askFn(parsedContent, query) {
+async function askFn(parsedContent, query) {
   // ...answer query against the parsed content with an LLM...
   return `Answer to "${query}"`;
 }
+
+export const SilbylPlugin = {
+  name: "my-ask-plugin",
+  type: "ask",
+  fn: askFn,
+};
 ```
 
 ### Example: A HTML parser plugin
@@ -128,15 +132,16 @@ export async function askFn(parsedContent, query) {
 `~/.sibyl/plugins/my-parse-plugin/main.js`
 
 ```js
-export const SilbylPlugin = {
-  name: "my-parse-plugin",
-  type: "parseHtml",
-};
-
-export async function parseHtmlFn(html) {
+async function parseHtmlFn(html) {
   // ...convert raw html into token-efficient markdown...
   return `# Parsed content`;
 }
+
+export const SilbylPlugin = {
+  name: "my-parse-plugin",
+  type: "parse",
+  fn: parseHtmlFn,
+};
 ```
 
 ### Validation
@@ -146,8 +151,8 @@ When `sibyl` is run, each plugin is validated. A plugin is **skipped with a warn
 - the folder has no `main.js`,
 - `SilbylPlugin` is missing or not an object,
 - `name` is missing or an empty string,
-- `type` is not one of `search` / `fetch` / `ask` / `parseHtml`,
-- the matching function export (`searchFn` / `fetchFn` / `askFn` / `parseHtmlFn`) is missing or not a function.
+- `type` is not one of `search` / `fetch` / `ask` / `parse`,
+- `fn` is missing or not a function.
 
 ## Contribution
 

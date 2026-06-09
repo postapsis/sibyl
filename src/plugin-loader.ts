@@ -6,15 +6,15 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import { pathToFileURL } from "url";
-import type { PluginTypeDeclaration } from "./@types/plugin.ts";
+import type { PluginType, PluginTypeDeclaration } from "./@types/plugin.ts";
 import { getBuiltinPlugins } from "./plugins/config.ts";
 
-const PLUGIN_FN_FIELD = {
-  search: "searchFn",
-  fetch: "fetchFn",
-  ask: "askFn",
-  parseHtml: "parseHtmlFn",
-} as const;
+const PLUGIN_TYPES: Record<PluginType, true> = {
+  search: true,
+  fetch: true,
+  ask: true,
+  parse: true,
+};
 
 export async function loadPlugins(): Promise<PluginTypeDeclaration[]> {
   const builtinPlugins = getBuiltinPlugins();
@@ -82,23 +82,20 @@ function validatePlugin(plugin: any, folderName: string): PluginTypeDeclaration 
     return null;
   }
 
-  if (typeof declaration.type !== "string" || !(declaration.type in PLUGIN_FN_FIELD)) {
+  if (typeof declaration.type !== "string" || !(declaration.type in PLUGIN_TYPES)) {
     console.warn(
-      `Skipping plugin in \`${folderName}\`: invalid \`type\` in \`SilbylPlugin\` (expected one of search, fetch, ask, parseHtml).`,
+      `Skipping plugin in \`${folderName}\`: invalid \`type\` in \`SilbylPlugin\` (expected one of search, fetch, ask, parse).`,
     );
     return null;
   }
 
-  const pluginType = declaration.type as keyof typeof PLUGIN_FN_FIELD;
+  const pluginType = declaration.type as PluginType;
   const pluginName = declaration.name;
 
-  const fnField = PLUGIN_FN_FIELD[pluginType];
-  if (typeof plugin[fnField] !== "function") {
-    console.warn(
-      `Skipping plugin \`${pluginName}\`: missing \`${fnField}\` function for plugin type \`${pluginType}\`.`,
-    );
+  if (typeof declaration.fn !== "function") {
+    console.warn(`Skipping plugin \`${pluginName}\`: missing \`fn\` function in \`SilbylPlugin\`.`);
     return null;
   }
 
-  return { name: pluginName, type: pluginType, fn: plugin[fnField] };
+  return { name: pluginName, type: pluginType, fn: declaration.fn } as PluginTypeDeclaration;
 }

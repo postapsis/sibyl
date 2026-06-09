@@ -2,6 +2,8 @@
  * Author: Jamius Siam
  * Since: 06/06/2026
  */
+import type { SearchPlugin } from "../../@types/plugin.ts";
+
 interface ExaResult {
   title: string | null;
   url: string;
@@ -12,7 +14,7 @@ interface ExaResponse {
   results: ExaResult[];
 }
 
-export async function searchFn(query: string) {
+async function searchFn(query: string) {
   const apiKey = process.env.EXA_API_KEY;
   if (!apiKey) {
     throw new Error("Missing `EXA_API_KEY` environment variable.");
@@ -51,7 +53,8 @@ export async function searchFn(query: string) {
     .join("\n\n");
 }
 
-export const SilbylPlugin = {
+export const SilbylPlugin: SearchPlugin = {
   name: "builtin-exa-search",
   type: "search",
+  fn: searchFn,
 };

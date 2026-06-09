@@ -84,13 +84,14 @@ describe("loads plugins correctly", () => {
     fs.writeFileSync(
       path.join(testPluginDir, "main.js"),
       `
-export async function searchFn(query) {
+async function searchFn(query) {
     return "hello " + query;
 }
 
 export const SilbylPlugin = {
     name: "test-search-plugin",
-    type: "search"
+    type: "search",
+    fn: searchFn
 }
     `,
     );
@@ -233,7 +234,7 @@ export const SilbylPlugin = {
     expect(plugins).toEqual(builtinPlugins);
 
     expect(console.warn).toHaveBeenCalledWith(
-      "Skipping plugin in `test-search-plugin`: invalid `type` in `SilbylPlugin` (expected one of search, fetch, ask, parseHtml).",
+      "Skipping plugin in `test-search-plugin`: invalid `type` in `SilbylPlugin` (expected one of search, fetch, ask, parse).",
     );
     expect(console.error).not.toHaveBeenCalled();
   });
@@ -261,7 +262,31 @@ export const SilbylPlugin = {
     expect(plugins).toEqual(builtinPlugins);
 
     expect(console.warn).toHaveBeenCalledWith(
-      "Skipping plugin in `test-search-plugin`: invalid `type` in `SilbylPlugin` (expected one of search, fetch, ask, parseHtml).",
+      "Skipping plugin in `test-search-plugin`: invalid `type` in `SilbylPlugin` (expected one of search, fetch, ask, parse).",
+    );
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  it("returns built-in plugins and warns for an invalid custom search plugin (`SilbylPlugin` has no `fn` property) ", async () => {
+    const testPluginDir = path.join(pluginsDir, "test-search-plugin");
+    fs.mkdirSync(testPluginDir);
+    fs.writeFileSync(
+      path.join(testPluginDir, "main.js"),
+      `
+export const SilbylPlugin = {
+    name: "test-search-plugin",
+    type: "search"
+}
+`,
+    );
+
+    const builtinPlugins = getBuiltinPlugins();
+    const plugins = await loadPlugins();
+
+    expect(plugins).toEqual(builtinPlugins);
+
+    expect(console.warn).toHaveBeenCalledWith(
+      "Skipping plugin `test-search-plugin`: missing `fn` function in `SilbylPlugin`.",
     );
     expect(console.error).not.toHaveBeenCalled();
   });

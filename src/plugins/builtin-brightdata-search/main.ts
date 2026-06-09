@@ -2,6 +2,8 @@
  * Author: Jamius Siam
  * Since: 06/06/2026
  */
+import type { SearchPlugin } from "../../@types/plugin.ts";
+
 interface BrightDataOrganicResult {
   title?: string;
   link?: string;
@@ -12,7 +14,7 @@ interface BrightDataSerp {
   organic?: BrightDataOrganicResult[];
 }
 
-export async function searchFn(query: string) {
+async function searchFn(query: string) {
   const apiKey = process.env.BRIGHTDATA_API_KEY;
   if (!apiKey) {
     throw new Error("Missing `BRIGHTDATA_API_KEY` environment variable.");
@@ -77,7 +79,8 @@ function parseSerp(data: unknown): BrightDataSerp {
   return (data ?? {}) as BrightDataSerp;
 }
 
-export const SilbylPlugin = {
+export const SilbylPlugin: SearchPlugin = {
   name: "builtin-brightdata-search",
   type: "search",
+  fn: searchFn,
 };
