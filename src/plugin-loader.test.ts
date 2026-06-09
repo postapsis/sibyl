@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 import { getBuiltinPlugins } from "./plugins/config.ts";
 import { loadPlugins } from "./plugin-loader.ts";
-import type { SearchPlugin } from "./@types/plugin.ts";
+import type { AskPlugin, FetchPlugin, ParsePlugin, SearchPlugin } from "./@types/plugin.ts";
 
 let homeDirPath: string;
 let sibylDir: string;
@@ -104,6 +104,103 @@ export const SilbylPlugin = {
     expect(customPlugin?.name).toEqual("test-search-plugin");
     expect(customPlugin?.type).toEqual("search");
     await expect(customPlugin.fn("testing")).resolves.toEqual("hello testing");
+
+    expect(console.warn).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  it("returns built-in plugins and a valid custom fetch plugin", async () => {
+    const testPluginDir = path.join(pluginsDir, "test-fetch-plugin");
+    fs.mkdirSync(testPluginDir);
+    fs.writeFileSync(
+      path.join(testPluginDir, "main.js"),
+      `
+async function fetchFn(url) {
+    return "fetched " + url;
+}
+
+export const SilbylPlugin = {
+    name: "test-fetch-plugin",
+    type: "fetch",
+    fn: fetchFn
+}
+    `,
+    );
+
+    const builtinPlugins = getBuiltinPlugins();
+    const plugins = await loadPlugins();
+    const customPlugin = plugins.at(-1)! as FetchPlugin;
+
+    expect(plugins.slice(0, -1)).toEqual(builtinPlugins);
+    expect(customPlugin?.name).toEqual("test-fetch-plugin");
+    expect(customPlugin?.type).toEqual("fetch");
+    await expect(customPlugin.fn("https://example.com")).resolves.toEqual(
+      "fetched https://example.com",
+    );
+
+    expect(console.warn).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  it("returns built-in plugins and a valid custom ask plugin", async () => {
+    const testPluginDir = path.join(pluginsDir, "test-ask-plugin");
+    fs.mkdirSync(testPluginDir);
+    fs.writeFileSync(
+      path.join(testPluginDir, "main.js"),
+      `
+async function askFn(content, query) {
+    return query + " => " + content;
+}
+
+export const SilbylPlugin = {
+    name: "test-ask-plugin",
+    type: "ask",
+    fn: askFn
+}
+    `,
+    );
+
+    const builtinPlugins = getBuiltinPlugins();
+    const plugins = await loadPlugins();
+    const customPlugin = plugins.at(-1)! as AskPlugin;
+
+    expect(plugins.slice(0, -1)).toEqual(builtinPlugins);
+    expect(customPlugin?.name).toEqual("test-ask-plugin");
+    expect(customPlugin?.type).toEqual("ask");
+    await expect(customPlugin.fn("the content", "the question")).resolves.toEqual(
+      "the question => the content",
+    );
+
+    expect(console.warn).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  it("returns built-in plugins and a valid custom parse plugin", async () => {
+    const testPluginDir = path.join(pluginsDir, "test-parse-plugin");
+    fs.mkdirSync(testPluginDir);
+    fs.writeFileSync(
+      path.join(testPluginDir, "main.js"),
+      `
+async function parseFn(html) {
+    return "parsed " + html;
+}
+
+export const SilbylPlugin = {
+    name: "test-parse-plugin",
+    type: "parse",
+    fn: parseFn
+}
+    `,
+    );
+
+    const builtinPlugins = getBuiltinPlugins();
+    const plugins = await loadPlugins();
+    const customPlugin = plugins.at(-1)! as ParsePlugin;
+
+    expect(plugins.slice(0, -1)).toEqual(builtinPlugins);
+    expect(customPlugin?.name).toEqual("test-parse-plugin");
+    expect(customPlugin?.type).toEqual("parse");
+    await expect(customPlugin.fn("<p>hi</p>")).resolves.toEqual("parsed <p>hi</p>");
 
     expect(console.warn).not.toHaveBeenCalled();
     expect(console.error).not.toHaveBeenCalled();
