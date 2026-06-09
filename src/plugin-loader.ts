@@ -16,11 +16,53 @@ const PLUGIN_FN_FIELD = {
   parseHtml: "parseHtmlFn",
 } as const;
 
-export async function loadPlugins() {
+export async function loadPlugins(): Promise<PluginTypeDeclaration[]> {
   const builtinPlugins = getBuiltinPlugins();
   const externalPlugins = await loadExternalPlugins();
 
   return [...builtinPlugins, ...externalPlugins];
+}
+
+async function loadExternalPlugins(): Promise<PluginTypeDeclaration[]> {
+  const pluginDir = path.join(os.homedir(), ".sibyl", "plugins");
+  const result: PluginTypeDeclaration[] = [];
+
+  try {
+    const folders = fs
+      .readdirSync(pluginDir, { withFileTypes: true })
+      .filter((f) => f.isDirectory() && !f.name.startsWith("."));
+
+    for (const folder of folders) {
+      if (folder.name.startsWith("builtin")) {
+        console.warn(
+          `Plugin name CAN NOT start with \`builtin\`. Skipping plugin \`${folder.name}\`.`,
+        );
+        continue;
+      }
+      const fullPath = path.join(pluginDir, folder.name, "main.js");
+      if (!fs.existsSync(fullPath)) {
+        console.warn(
+          `Plugin \`${folder.name}\` does not have a main.js file. Skipping plugin \`${folder.name}\`.`,
+        );
+        continue;
+      }
+
+      try {
+        const plugin = await import(pathToFileURL(fullPath).href);
+        const validatedPlugin = validatePlugin(plugin, folder.name);
+
+        if (!validatedPlugin) {
+          continue;
+        }
+
+        result.push(validatedPlugin);
+      } catch (err: any) {
+        console.error(`Error loading plugin from \`${folder.name}\`:`, err.message);
+      }
+    }
+  } catch (error) {}
+
+  return result;
 }
 
 function validatePlugin(plugin: any, folderName: string): PluginTypeDeclaration | null {
@@ -59,42 +101,4 @@ function validatePlugin(plugin: any, folderName: string): PluginTypeDeclaration 
   }
 
   return { name: pluginName, type: pluginType, fn: plugin[fnField] };
-}
-
-async function loadExternalPlugins() {
-  const pluginDir = path.join(os.homedir(), ".sibyl", "plugins");
-  const result: PluginTypeDeclaration[] = [];
-
-  const folders = fs
-    .readdirSync(pluginDir, { withFileTypes: true })
-    .filter((f) => f.isDirectory() && !f.name.startsWith("."));
-
-  for (const folder of folders) {
-    if (folder.name.startsWith("builtin-")) {
-      console.warn(
-        `Plugin name CAN NOT start with \`builtin-\`. Skipping plugin \`${folder.name}\``,
-      );
-      continue;
-    }
-    const fullPath = path.join(pluginDir, folder.name, "main.js");
-    if (!fs.existsSync(fullPath)) {
-      console.warn(`Plugin \`${folder.name}\` does not have a main.js file. Skipping.`);
-      continue;
-    }
-
-    try {
-      const plugin = await import(pathToFileURL(fullPath).href);
-      const validatedPlugin = validatePlugin(plugin, folder.name);
-
-      if (!validatedPlugin) {
-        continue;
-      }
-
-      result.push(validatedPlugin);
-    } catch (err: any) {
-      console.error(`Error loading plugin from \`${folder.name}\`:`, err.message);
-    }
-  }
-
-  return result;
 }

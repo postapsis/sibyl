@@ -59,7 +59,7 @@ Plugins are loaded at runtime from your home config directory. `sibyl` creates t
         └── main.js
 ```
 
-To add a plugin, create a folder under `~/.sibyl/plugins/` and put a `main.js` inside it. (Folder names starting with `builtin-` are reserved and will be skipped.)
+To add a plugin, create a folder under `~/.sibyl/plugins/` and put a `main.js` inside it. (Folder names starting with `builtin` are reserved and will be skipped.)
 
 ### The contract
 

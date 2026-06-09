@@ -47,7 +47,7 @@ Key detail: the function is a **sibling module export**, not a field of `SilbylP
 
 - `validatePlugin` checks: `SilbylPlugin` is an object, `name` is a non-empty string, `type` is valid, and `plugin[fnField]` is a function. Invalid plugins are skipped with a `console.warn`.
 - The loader normalizes each plugin to the internal `PluginTypeDeclaration` shape `{ name, type, fn }` — `name` comes from `SilbylPlugin.name` (not the folder), and the type-specific export is stored under `fn`.
-- Folder names starting with `builtin-` are reserved/skipped. `src/plugins/` exists for in-repo (builtin) plugins.
+- Folder names starting with `builtin` are reserved/skipped. `src/plugins/` exists for in-repo (builtin) plugins.
 
 When changing the plugin shape, update all three together: `src/@types/plugin.ts` (types), `plugin-loader.ts` (validation + `PLUGIN_FN_FIELD` + normalization), and the consumer in `cli.ts`.
 
