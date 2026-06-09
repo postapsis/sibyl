@@ -10,9 +10,9 @@ async function fetchFn(url: string) {
     throw new Error("Missing `BRIGHTDATA_API_KEY` environment variable.");
   }
 
-  const zone = process.env.BRIGHTDATA_WEB_UNLOCKER_API_NAME;
+  const zone = process.env.BRIGHTDATA_WEB_UNLOCKER_API_ZONE;
   if (!zone) {
-    throw new Error("Missing `BRIGHTDATA_WEB_UNLOCKER_API_NAME` environment variable.");
+    throw new Error("Missing `BRIGHTDATA_WEB_UNLOCKER_API_ZONE` environment variable.");
   }
 
   const res = await fetch("https://api.brightdata.com/request", {

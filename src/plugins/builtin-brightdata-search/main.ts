@@ -20,9 +20,9 @@ async function searchFn(query: string) {
     throw new Error("Missing `BRIGHTDATA_API_KEY` environment variable.");
   }
 
-  const zone = process.env.BRIGHTDATA_SERP_API_NAME;
+  const zone = process.env.BRIGHTDATA_SERP_API_ZONE;
   if (!zone) {
-    throw new Error("Missing `BRIGHTDATA_SERP_API_NAME` environment variable.");
+    throw new Error("Missing `BRIGHTDATA_SERP_API_ZONE` environment variable.");
   }
 
   const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&hl=en`;
@@ -57,7 +57,7 @@ async function searchFn(query: string) {
     .map((r) => {
       const title = r.title ?? "(untitled)";
       const description = r.description ? `\n${r.description}` : "";
-      return `${title}\n${r.link ?? ""}${description}`;
+      return `${title}\n${r.link}${description}`;
     })
     .join("\n\n");
 }
