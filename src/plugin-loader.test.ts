@@ -36,6 +36,8 @@ it("returns only built-in plugins when `plugins` dir is absent", async () => {
   const plugins = await loadPlugins();
 
   expect(plugins).toEqual(builtinPlugins);
+  expect(console.warn).not.toHaveBeenCalled();
+  expect(console.error).not.toHaveBeenCalled();
 });
 
 describe("loads plugins correctly", () => {
