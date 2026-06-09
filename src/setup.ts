@@ -56,7 +56,7 @@ export function writeDefaultSibylConfig(): void {
     plugins: {
       search: "builtin-exa-search",
       fetch: "builtin-exa-fetch",
-      parse: "builtin-parse-HtmlToMd",
+      parse: "builtin-parse-htmlToMd",
     },
     variables: [],
   };

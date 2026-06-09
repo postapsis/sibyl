@@ -31,7 +31,7 @@ npm install -g @postapsis/sibyl
   "plugins": {
     "search": "builtin-exa-search",
     "fetch": "builtin-exa-fetch",
-    "parse": "builtin-parse-HtmlToMd"
+    "parse": "builtin-parse-htmlToMd"
   },
 
   "variables": [{ "name": "EXA_API_KEY", "value": "your-api-key" }]

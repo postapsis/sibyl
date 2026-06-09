@@ -11,7 +11,7 @@ async function parseHtmlFn(html: string) {
 }
 
 export const SilbylPlugin: ParsePlugin = {
-  name: "builtin-parse-HtmlToMd",
+  name: "builtin-parse-htmlToMd",
   type: "parse",
   fn: parseHtmlFn,
 };
