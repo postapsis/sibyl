@@ -387,4 +387,26 @@ export const SilbylPlugin = {
     );
     expect(console.error).not.toHaveBeenCalled();
   });
+
+  it("returns built-in plugins and logs an error when a plugin fails to import", async () => {
+    const testPluginDir = path.join(pluginsDir, "test-broken-plugin");
+    fs.mkdirSync(testPluginDir);
+    fs.writeFileSync(
+      path.join(testPluginDir, "main.js"),
+      `
+throw new Error("loading error");
+`,
+    );
+
+    const builtinPlugins = getBuiltinPlugins();
+    const plugins = await loadPlugins();
+
+    expect(plugins).toEqual(builtinPlugins);
+
+    expect(console.error).toHaveBeenCalledWith(
+      "Error loading plugin from `test-broken-plugin`:",
+      "loading error",
+    );
+    expect(console.warn).not.toHaveBeenCalled();
+  });
 });
