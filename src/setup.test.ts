@@ -56,6 +56,7 @@ afterEach(() => {
   for (const key of Object.keys(process.env)) {
     if (!(key in envSnapshot)) delete process.env[key];
   }
+
   Object.assign(process.env, envSnapshot);
 });
 
@@ -67,6 +68,7 @@ describe("loads or creates config dir", () => {
 
     expect(fs.existsSync(sibylDir)).toBe(true);
     expect(console.log).toHaveBeenCalledWith(`Creating config directory at ${sibylDir}`);
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   it("does nothing when ~/.sibyl already exists", () => {
@@ -76,6 +78,8 @@ describe("loads or creates config dir", () => {
     loadOrCreateConfigDir();
 
     expect(mkdir).not.toHaveBeenCalled();
+    expect(console.log).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 });
 
@@ -87,6 +91,7 @@ describe("loads or creates plugins dir", () => {
 
     expect(fs.existsSync(pluginsDir)).toBe(true);
     expect(console.log).toHaveBeenCalledWith(`Creating plugins directory at ${pluginsDir}`);
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   it("does nothing when plugins dir already exists", () => {
@@ -96,6 +101,8 @@ describe("loads or creates plugins dir", () => {
     loadOrCreatePluginsDir();
 
     expect(mkdir).not.toHaveBeenCalled();
+    expect(console.log).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 });
 
@@ -106,8 +113,10 @@ describe("writes default sibyl config", () => {
     writeDefaultSibylConfig();
 
     const written = JSON.parse(fs.readFileSync(configFile, "utf8")) as SibylConfig;
+
     expect(written).toEqual({ plugins: DEFAULT_PLUGINS, variables: [] });
     expect(console.log).toHaveBeenCalledWith(`Creating config file at ${configFile}`);
+    expect(console.error).not.toHaveBeenCalled();
   });
 });
 
@@ -121,6 +130,8 @@ describe("loads or creates config file", () => {
 
     expect(config).toEqual({ plugins: DEFAULT_PLUGINS, variables: [] });
     expect(fs.existsSync(configFile)).toBe(true);
+    expect(console.log).toHaveBeenCalledWith(`Creating config file at ${configFile}`);
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   it("rewrites the default config when the file is empty", () => {
@@ -129,6 +140,8 @@ describe("loads or creates config file", () => {
     const config = loadOrCreateConfigFile();
 
     expect(config).toEqual({ plugins: DEFAULT_PLUGINS, variables: [] });
+    expect(console.log).toHaveBeenCalledWith(`Creating config file at ${configFile}`);
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   it("parses and returns an existing config with a built-in plugin", () => {
@@ -141,6 +154,8 @@ describe("loads or creates config file", () => {
     const config = loadOrCreateConfigFile();
 
     expect(config).toEqual(existing);
+    expect(console.log).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   it("parses and returns an existing config with custom plugin", () => {
@@ -153,6 +168,8 @@ describe("loads or creates config file", () => {
     const config = loadOrCreateConfigFile();
 
     expect(config).toEqual(existing);
+    expect(console.log).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   it("handles a config with no variables field", () => {
@@ -166,6 +183,8 @@ describe("loads or creates config file", () => {
     const config = loadOrCreateConfigFile();
 
     expect(config).toEqual(existing);
+    expect(console.log).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   it("injects config variables into process.env", () => {
@@ -179,6 +198,8 @@ describe("loads or creates config file", () => {
     loadOrCreateConfigFile();
 
     expect(process.env.TEST_INJECTED_VAR).toBe("hello");
+    expect(console.log).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   it("lets config variables override existing env values", () => {
@@ -192,6 +213,8 @@ describe("loads or creates config file", () => {
     loadOrCreateConfigFile();
 
     expect(process.env.TEST_OVERRIDE_VAR).toBe("from-config");
+    expect(console.log).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   it("exits when a plugin name is empty (invalid config)", () => {
@@ -200,6 +223,7 @@ describe("loads or creates config file", () => {
 
     expect(() => loadOrCreateConfigFile()).toThrow("process.exit");
     expect(exit).toHaveBeenCalledWith(1);
+    expect(console.log).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledWith(
       "Invalid configuration: plugin name for type `search` must be a non-empty string.",
     );
@@ -215,6 +239,7 @@ describe("loads or creates config file", () => {
 
     expect(() => loadOrCreateConfigFile()).toThrow("process.exit");
     expect(exit).toHaveBeenCalledWith(1);
+    expect(console.log).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledWith(
       "Invalid configuration: plugin name for type `search` must be a non-empty string.",
     );
@@ -235,6 +260,7 @@ describe("loads or creates config file", () => {
     // isFileEmptySync swallows the error, returns false, so the existing
     // file is read instead of being overwritten with defaults.
     expect(config).toEqual(existing);
+    expect(console.log).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledWith(
       `Error reading the config file at: ${configFile}`,
       expect.any(Error),
