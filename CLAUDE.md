@@ -10,8 +10,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm typecheck` — `tsc --noEmit`. Run after type-level changes; the build is strict (see below).
 - `pnpm lint` — ESLint over the repo.
 - `pnpm format` — Prettier write.
+- `pnpm test` — run the Vitest suite once (`vitest run`). `pnpm test:watch` for watch mode, `pnpm test:coverage` for a coverage report.
 
-No test runner is configured. `lint-staged` + Husky run Prettier on commit.
+Tests run on **Vitest** (`vitest.config.ts`) and are colocated as `*.test.ts` next to the code they cover (e.g. `src/plugins/builtin-exa-search/main.test.ts`). `lint-staged` + Husky run Prettier on commit.
 
 # Code writing instruction
 
@@ -26,7 +27,7 @@ Follow these rules when editing code in this project.
 
 `sibyl` is a CLI web search/crawl tool for AI Agents (`bin: sibyl` → `dist/cli.js`) with a filesystem-based plugin system. Key modules:
 
-- `src/cli.ts` — entry point. Ensures dirs + config exist, loads plugins, dispatches commands (`search`, `--help`, `--version`).
+- `src/cli.ts` — entry point. Ensures dirs + config exist, loads plugins, dispatches commands (`search`, `fetch`, `--help`, `--version`). Only `search` and `fetch` are wired up; `fetch` prints the fetch plugin's output directly (it no longer runs a `parse` plugin), so the `ask` and `parse` plugin types are part of the contract but not yet dispatched by any command.
 - `src/setup.ts` — ensures `~/.sibyl` and `~/.sibyl/plugins` exist, and loads/creates/validates `~/.sibyl/config.json` (all on every invocation).
 - `src/plugin-loader.ts` — assembles the active plugin set: builtin plugins + external (on-disk) plugins; validates the external ones.
 - `src/plugins/config.ts` — `getBuiltinPlugins()`, the in-repo builtin plugin registry.
