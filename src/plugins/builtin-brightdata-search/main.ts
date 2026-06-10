@@ -59,9 +59,9 @@ async function searchFn(query: string) {
     );
   }
 
-  const organicResults = (await res.json()) as BrightDataSerpResult;
+  const organicResults = (await res.json()) as BrightDataSerpResult | null;
 
-  if (!organicResults.organic?.length) {
+  if (!organicResults?.organic?.length) {
     return `No results for: ${query}`;
   }
 
