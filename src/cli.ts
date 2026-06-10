@@ -110,23 +110,8 @@ async function handleFetch(plugins: PluginTypeDeclaration[], config: SibylConfig
     process.exit(1);
   }
 
-  const parseHtmlPluginName = config.plugins.parse;
-  let parseHtmlPlugin: ParsePlugin | undefined;
-
-  if (parseHtmlPluginName) {
-    parseHtmlPlugin = plugins.find(
-      (plugin) => plugin.type === "parse" && plugin.name === parseHtmlPluginName,
-    ) as ParsePlugin;
-
-    if (!parseHtmlPlugin) {
-      console.error(`Configured parse plugin \`${parseHtmlPluginName}\` not found`);
-      process.exit(1);
-    }
-  }
-
   try {
-    const html = await fetchPlugin.fn(url);
-    const content = parseHtmlPlugin ? await parseHtmlPlugin.fn(html) : html;
+    const content = await fetchPlugin.fn(url);
     console.log(content);
   } catch (error) {
     console.error(`Error fetching using ${fetchPlugin.name}: ${error}`);
