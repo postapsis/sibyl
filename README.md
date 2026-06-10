@@ -1,6 +1,6 @@
 ![sibyl Logo](https://raw.githubusercontent.com/postapsis/sibyl/refs/heads/main/media-kit/banner.png)
 
-[![POST/APSIS Sibly Page](https://img.shields.io/badge/made_by-postapsis-%23000000)](https://postapsis.com/sibyl)
+[![POST/APSIS Sibly Page](https://img.shields.io/badge/made_by-POST%2FAPSIS-%23000000)](https://postapsis.com/sibyl)
 [![sibyl License Page](https://img.shields.io/badge/license-Apache_2.0-brightgreen)](https://raw.githubusercontent.com/postapsis/sibyl/refs/heads/main/LICENSE)
 <br/>
 
@@ -10,24 +10,19 @@
 
 ---
 
-## Requirements
-
-- Node.js `>=22`
-- NPM/PNPM etc.
-
-## Install
+## Status
 
 Currently in development.
 
 ## Commands
 
-| Command           | Description                                                                                                               |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `search`          | Searches the web (`sibyl search "react vite boostrap"`                                                                    |
-| `fetch`           | Gets the content of a site in token-efficient markdown (`sibyl fetch https://vite.dev/guide`                              |
-| `ask`             | Asks a query using LLM from a site's content (`sibyl ask https://vite.dev/guide "how to start a react project wiht vite"` |
-| `--help`, `-h`    | Show help.                                                                                                                |
-| `--version`, `-v` | Show version.                                                                                                             |
+| Command           | Description                                                                                                                   |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `search`          | Searches the web <br/>`sibyl search "react vite boostrap"`                                                                    |
+| `fetch`           | Gets the content of a site in token-efficient markdown <br/>`sibyl fetch https://vite.dev/guide`                              |
+| `ask`             | Asks a query using LLM from a site's content <br/>`sibyl ask https://vite.dev/guide "how to start a react project wiht vite"` |
+| `--help`, `-h`    | Show help.                                                                                                                    |
+| `--version`, `-v` | Show version.                                                                                                                 |
 
 ## Configuration
 
