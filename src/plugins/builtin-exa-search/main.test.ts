@@ -68,6 +68,32 @@ describe("builtin-exa-search", () => {
     );
   });
 
+  it("appends processed highlights when show description flag is enabled", async () => {
+    process.env.SIBYL_SHOW_SEARCH_DESCRIPTION = "true";
+    const fetchMock = stubFetch(
+      makeResponse({
+        json: {
+          results: [
+            {
+              title: "First",
+              url: "https://a.com",
+              highlights: ["foo [...] bar", "line1\nline2", "double  space"],
+            },
+            { title: null, url: "https://b.com" },
+          ],
+        },
+      }),
+    );
+
+    await expect(searchFn("react")).resolves.toEqual(
+      'First\nhttps://a.com\n"""foo ... bar line1 line2 double space"""\n\n(untitled)\nhttps://b.com',
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.exa.ai/search",
+      expect.objectContaining({ body: expect.stringContaining('"highlights":true') }),
+    );
+  });
+
   it("calls the Exa search endpoint with the api key header", async () => {
     const fetchMock = stubFetch(makeResponse({ json: { results: [] } }));
 
@@ -84,6 +110,12 @@ describe("builtin-exa-search", () => {
 
   it("returns a no-results message when `results` is empty", async () => {
     stubFetch(makeResponse({ json: { results: [] } }));
+
+    await expect(searchFn("react")).resolves.toEqual("No results for: react");
+  });
+
+  it("returns a no-results message when the response body is null", async () => {
+    stubFetch(makeResponse({ json: null }));
 
     await expect(searchFn("react")).resolves.toEqual("No results for: react");
   });

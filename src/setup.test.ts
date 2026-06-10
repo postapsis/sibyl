@@ -22,10 +22,13 @@ import {
 } from "./setup.ts";
 import { exit } from "./utils.ts";
 
-const DEFAULT_PLUGINS = {
-  search: "builtin-exa-search",
-  fetch: "builtin-exa-fetch",
-  parse: "builtin-parse-htmlToMd",
+const DEFAULT_CONFIG: SibylConfig = {
+  plugins: {
+    search: "builtin-exa-search",
+    fetch: "builtin-exa-fetch",
+    parse: "builtin-parse-htmlToMd",
+  },
+  variables: [{ name: "SIBYL_SHOW_SEARCH_DESCRIPTION", value: "true" }],
 };
 
 let home: string;
@@ -114,7 +117,7 @@ describe("writes default sibyl config", () => {
 
     const written = JSON.parse(fs.readFileSync(configFile, "utf8")) as SibylConfig;
 
-    expect(written).toEqual({ plugins: DEFAULT_PLUGINS, variables: [] });
+    expect(written).toEqual(DEFAULT_CONFIG);
     expect(console.log).toHaveBeenCalledWith(`Creating config file at ${configFile}`);
     expect(console.error).not.toHaveBeenCalled();
   });
@@ -128,7 +131,7 @@ describe("loads or creates config file", () => {
   it("writes and returns the default config when the file is missing", () => {
     const config = loadOrCreateConfigFile();
 
-    expect(config).toEqual({ plugins: DEFAULT_PLUGINS, variables: [] });
+    expect(config).toEqual(DEFAULT_CONFIG);
     expect(fs.existsSync(configFile)).toBe(true);
     expect(console.log).toHaveBeenCalledWith(`Creating config file at ${configFile}`);
     expect(console.error).not.toHaveBeenCalled();
@@ -139,7 +142,7 @@ describe("loads or creates config file", () => {
 
     const config = loadOrCreateConfigFile();
 
-    expect(config).toEqual({ plugins: DEFAULT_PLUGINS, variables: [] });
+    expect(config).toEqual(DEFAULT_CONFIG);
     expect(console.log).toHaveBeenCalledWith(`Creating config file at ${configFile}`);
     expect(console.error).not.toHaveBeenCalled();
   });

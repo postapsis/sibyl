@@ -29,12 +29,6 @@ function stubFetch(res: unknown) {
   return mock;
 }
 
-const ORGANIC = [
-  { title: "First", link: "https://a.com", description: "desc a" },
-  { title: null, link: "https://b.com" },
-];
-const FORMATTED = "First\nhttps://a.com\ndesc a\n\n(untitled)\nhttps://b.com";
-
 let envSnapshot: NodeJS.ProcessEnv;
 
 beforeEach(() => {
@@ -68,22 +62,77 @@ describe("builtin-brightdata-search", () => {
     );
   });
 
-  it("formats organic results returned directly", async () => {
-    stubFetch(makeResponse({ json: { organic: ORGANIC } }));
+  it("formats results with title and link only when show description flag is disabled/missing", async () => {
+    stubFetch(
+      makeResponse({
+        json: {
+          organic: [
+            { title: "First", link: "https://a.com", description: "desc a" },
+            { title: null, link: "https://b.com" },
+          ],
+        },
+      }),
+    );
 
-    await expect(searchFn("react")).resolves.toEqual(FORMATTED);
+    await expect(searchFn("react")).resolves.toEqual(
+      "First\nhttps://a.com\n\n(untitled)\nhttps://b.com",
+    );
   });
 
-  it("formats organic results wrapped in a `body` object", async () => {
-    stubFetch(makeResponse({ json: { body: { organic: ORGANIC } } }));
+  it("includes descriptions and strips a trailing `Read more` when show description flag is  enabled", async () => {
+    process.env.SIBYL_SHOW_SEARCH_DESCRIPTION = "true";
+    stubFetch(
+      makeResponse({
+        json: {
+          organic: [
+            { title: "First", link: "https://a.com", description: "desc a" },
+            { title: "Second", link: "https://c.com", description: "Some text...Read more" },
+            { title: null, link: "https://b.com" },
+          ],
+        },
+      }),
+    );
 
-    await expect(searchFn("react")).resolves.toEqual(FORMATTED);
+    await expect(searchFn("react")).resolves.toEqual(
+      "First\nhttps://a.com\ndesc a\n\n" +
+        "Second\nhttps://c.com\nSome text...\n\n" +
+        "(untitled)\nhttps://b.com",
+    );
   });
 
-  it("formats organic results wrapped in a `body` JSON string", async () => {
-    stubFetch(makeResponse({ json: { body: JSON.stringify({ organic: ORGANIC }) } }));
+  it("requests the parsed-raw SERP with the default language and no country", async () => {
+    const fetchMock = stubFetch(makeResponse({ json: { organic: [] } }));
 
-    await expect(searchFn("react")).resolves.toEqual(FORMATTED);
+    await searchFn("react");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.brightdata.com/request",
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining('"format":"raw"'),
+      }),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.brightdata.com/request",
+      expect.objectContaining({ body: expect.stringContaining("q=react&hl=en") }),
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      "https://api.brightdata.com/request",
+      expect.objectContaining({ body: expect.stringContaining("&gl=") }),
+    );
+  });
+
+  it("applies the configured language and country from env to the search url", async () => {
+    process.env.BRIGHTDATA_SERP_API_LANGUAGE = "fr";
+    process.env.BRIGHTDATA_SERP_API_COUNTRY = "us";
+    const fetchMock = stubFetch(makeResponse({ json: { organic: [] } }));
+
+    await searchFn("react");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.brightdata.com/request",
+      expect.objectContaining({ body: expect.stringContaining("q=react&hl=fr&gl=us") }),
+    );
   });
 
   it("returns a no-results message when there are no organic results", async () => {
