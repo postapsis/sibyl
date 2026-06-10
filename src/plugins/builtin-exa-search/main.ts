@@ -20,6 +20,8 @@ async function searchFn(query: string) {
     throw new Error("Missing `EXA_API_KEY` environment variable.");
   }
 
+  const showDescription = process.env.SIBYL_SHOW_SEARCH_DESCRIPTION === "true";
+
   const res = await fetch("https://api.exa.ai/search", {
     method: "POST",
     headers: {
@@ -30,7 +32,7 @@ async function searchFn(query: string) {
       query,
       type: "auto",
       contents: {
-        highlights: false,
+        highlights: showDescription,
       },
     }),
   });
@@ -39,16 +41,32 @@ async function searchFn(query: string) {
     throw new Error(`Exa search failed: ${res.status} ${res.statusText} - ${await res.text()}`);
   }
 
-  const data = (await res.json()) as ExaResponse;
+  const data = (await res.json()) as ExaResponse | null;
 
-  if (!data.results?.length) {
+  if (!data?.results?.length) {
     return `No results for: ${query}`;
   }
 
   return data.results
     .map((r) => {
       const title = r.title ?? "(untitled)";
-      return `${title}\n${r.url}`;
+      const highlights = r.highlights;
+
+      if (showDescription && highlights) {
+        // Measures to reduce tokens in exa highlights
+        const processedHighlight = JSON.stringify(
+          highlights
+            .join(" ")
+            .replace(/\[\.\.\.\]/g, "...")
+            .replace(/\n/g, " ")
+            .replace(/\s{2,}/g, " "),
+        );
+
+        // JSON.stringify already adds one quote pair
+        return `${title}\n${r.url}\n""${processedHighlight}""`;
+      } else {
+        return `${title}\n${r.url}`;
+      }
     })
     .join("\n\n");
 }

@@ -5,14 +5,18 @@
 import type { SearchPlugin } from "../../@types/plugin.ts";
 
 interface BrightDataOrganicResult {
-  title?: string;
-  link?: string;
+  title: string;
+  link: string;
+  global_rank: number;
   description?: string;
 }
 
-interface BrightDataSerp {
+interface BrightDataSerpResult {
   organic?: BrightDataOrganicResult[];
 }
+
+const PATTERN_READ_MORE = /\.\.\.Read more$/i;
+const READ_MORE_SLICE_LENGTH = "Read more".length;
 
 async function searchFn(query: string) {
   const apiKey = process.env.BRIGHTDATA_API_KEY;
@@ -24,8 +28,16 @@ async function searchFn(query: string) {
   if (!zone) {
     throw new Error("Missing `BRIGHTDATA_SERP_API_ZONE` environment variable.");
   }
+  const showDescription = process.env.SIBYL_SHOW_SEARCH_DESCRIPTION === "true";
 
-  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&hl=en`;
+  const language = process.env.BRIGHTDATA_SERP_API_LANGUAGE ?? "en";
+  const country = process.env.BRIGHTDATA_SERP_API_COUNTRY ?? "";
+
+  let searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}&hl=${language}`;
+
+  if (country) {
+    searchUrl += `&gl=${country}`;
+  }
 
   const res = await fetch("https://api.brightdata.com/request", {
     method: "POST",
@@ -36,7 +48,7 @@ async function searchFn(query: string) {
     body: JSON.stringify({
       zone,
       url: searchUrl,
-      format: "json",
+      format: "raw",
       data_format: "parsed_light",
     }),
   });
@@ -47,36 +59,29 @@ async function searchFn(query: string) {
     );
   }
 
-  const serp = parseSerp(await res.json());
+  const organicResults = (await res.json()) as BrightDataSerpResult;
 
-  if (!serp.organic?.length) {
+  if (!organicResults.organic?.length) {
     return `No results for: ${query}`;
   }
 
-  return serp.organic
+  return organicResults.organic
     .map((r) => {
       const title = r.title ?? "(untitled)";
-      const description = r.description ? `\n${r.description}` : "";
-      return `${title}\n${r.link}${description}`;
+      let description = r.description;
+
+      if (showDescription && description) {
+        // We strip the ending "Read more" text here if it's present
+        if (PATTERN_READ_MORE.test(description)) {
+          description = description.slice(0, -READ_MORE_SLICE_LENGTH).trim();
+        }
+
+        return `${title}\n${r.link}\n${description}`;
+      } else {
+        return `${title}\n${r.link}`;
+      }
     })
     .join("\n\n");
-}
-
-// The parsed SERP is either returned directly or wrapped under a `body` field
-// (which may itself be a JSON string), depending on the response envelope.
-function parseSerp(data: unknown): BrightDataSerp {
-  const root = data as { body?: unknown };
-  const body = root?.body;
-
-  if (typeof body === "string") {
-    return JSON.parse(body) as BrightDataSerp;
-  }
-
-  if (body && typeof body === "object") {
-    return body as BrightDataSerp;
-  }
-
-  return (data ?? {}) as BrightDataSerp;
 }
 
 export const SilbylPlugin: SearchPlugin = {
