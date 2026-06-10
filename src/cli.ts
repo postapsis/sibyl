@@ -5,12 +5,7 @@
  * Since: 06/06/2026
  */
 import { loadOrCreateConfigDir, loadOrCreateConfigFile, loadOrCreatePluginsDir } from "./setup.ts";
-import type {
-  FetchPlugin,
-  ParsePlugin,
-  PluginTypeDeclaration,
-  SearchPlugin,
-} from "./@types/plugin.ts";
+import type { FetchPlugin, PluginTypeDeclaration, SearchPlugin } from "./@types/plugin.ts";
 import type { SibylConfig } from "./@types/sibyl-config.ts";
 import { loadPlugins } from "./plugin-loader.ts";
 import { isValidHttpUrl } from "./utils.ts";
@@ -31,7 +26,7 @@ async function main(argv: string[]): Promise<void> {
     case "-h":
       printHelp();
       break;
-    case "search":
+    case "search": {
       const query = rest.join(" ").trim();
 
       if (!query) {
@@ -41,7 +36,8 @@ async function main(argv: string[]): Promise<void> {
 
       handleSearch(plugins, config, query);
       break;
-    case "fetch":
+    }
+    case "fetch": {
       const url = rest[0]?.trim();
 
       if (!url) {
@@ -56,6 +52,7 @@ async function main(argv: string[]): Promise<void> {
 
       handleFetch(plugins, config, url);
       break;
+    }
     case "--version":
     case "-v":
       console.log("sibyl 0.1.0");
@@ -93,7 +90,7 @@ function handleSearch(plugins: PluginTypeDeclaration[], config: SibylConfig, que
     });
 }
 
-async function handleFetch(plugins: PluginTypeDeclaration[], config: SibylConfig, url: string) {
+function handleFetch(plugins: PluginTypeDeclaration[], config: SibylConfig, url: string) {
   const fetchPluginName = config.plugins.fetch;
 
   if (!fetchPluginName) {
@@ -110,13 +107,13 @@ async function handleFetch(plugins: PluginTypeDeclaration[], config: SibylConfig
     process.exit(1);
   }
 
-  try {
-    const content = await fetchPlugin.fn(url);
-    console.log(content);
-  } catch (error) {
-    console.error(`Error fetching using ${fetchPlugin.name}: ${error}`);
-    process.exit(1);
-  }
+  fetchPlugin
+    .fn(url)
+    .then((result) => console.log(result))
+    .catch((error) => {
+      console.error(`Error searching using ${fetchPlugin.name}: ${error}`);
+      process.exit(1);
+    });
 }
 
 function printHelp(): void {
@@ -126,8 +123,14 @@ Usage:
   sibyl <command> [options]
 
 Commands:
-  help       Show this help
-  version    Show version
+  search <query>   Search the web
+  fetch <url>      Fetch the content of a URL
+  help             Show this help
+  version          Show version
+
+Examples:
+  sibyl search "react vite bootstrap"
+  sibyl fetch https://vite.dev/guide
 `);
 }
 
