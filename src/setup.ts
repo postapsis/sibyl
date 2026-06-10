@@ -58,7 +58,12 @@ export function writeDefaultSibylConfig(): void {
       fetch: "builtin-exa-fetch",
       parse: "builtin-parse-htmlToMd",
     },
-    variables: [],
+    variables: [
+      {
+        name: "SIBYL_SHOW_SEARCH_DESCRIPTION",
+        value: "true",
+      },
+    ],
   };
 
   fs.writeFileSync(configFile, JSON.stringify(sibylConfig, null, 2));
