@@ -1,7 +1,7 @@
 {
   "name": "sibyl",
   "version": "0.1.0",
-  "description": "",
+  "description": "Give your AI Agent the web, without the bloat — extensible and lightweight by design 🕷️",
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
@@ -29,7 +29,13 @@
   "engines": {
     "node": ">=22"
   },
-  "keywords": [],
+  "keywords": [
+    "ai",
+    "search",
+    "ai-agent",
+    "fetch",
+    "crawl"
+  ],
   "author": {
     "name": "POST/APSIS",
     "email": "dev@postapsis.com",
