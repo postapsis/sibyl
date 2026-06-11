@@ -6,7 +6,7 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 import type { SibylConfig } from "./@types/sibyl-config.ts";
-import { exit } from "./utils.ts";
+import { exit } from "./exit.ts";
 
 export function loadOrCreateConfigDir(): void {
   const configDir = path.join(os.homedir(), ".sibyl");

@@ -14,6 +14,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Tests run on **Vitest** (`vitest.config.ts`) and are colocated as `*.test.ts` next to the code they cover (e.g. `src/plugins/builtin-exa-search/main.test.ts`). `lint-staged` + Husky run Prettier on commit.
 
+To test code that hard-exits, mock the exit seam: `vi.mock("./exit.ts", () => ({ exit: vi.fn(() => { throw new Error("process.exit"); }) }))`. Error paths then assert `rejects.toThrow("process.exit")` (or `toThrow(...)`) plus `expect(exit).toHaveBeenCalledWith(1)`.
+
 # Code writing instruction
 
 Follow these rules when editing code in this project.
@@ -27,10 +29,12 @@ Follow these rules when editing code in this project.
 
 `sibyl` is a CLI web search/crawl tool for AI Agents (`bin: sibyl` → `dist/cli.js`) with a filesystem-based plugin system. Key modules:
 
-- `src/cli.ts` — entry point. Ensures dirs + config exist, loads plugins, dispatches commands (`search`, `fetch`, `--help`, `--version`). Only `search` and `fetch` are wired up; `fetch` prints the fetch plugin's output directly (it no longer runs a `parse` plugin), so the `ask` and `parse` plugin types are part of the contract but not yet dispatched by any command.
+- `src/cli.ts` — entry point. Ensures dirs + config exist, loads plugins, dispatches commands (`search`, `fetch`, `help`/`--help`/`-h`, `version`/`--version`). Only `search` and `fetch` are wired up via the async `handleSearch`/`handleFetch` helpers (awaited by `main`); `fetch` prints the fetch plugin's output directly (it no longer runs a `parse` plugin), so the `ask` and `parse` plugin types are part of the contract but not yet dispatched by any command. `main` is exported and only auto-runs when the file is the actual CLI entry (`import.meta.url` vs `process.argv[1]` guard), so tests can import it without side effects.
 - `src/setup.ts` — ensures `~/.sibyl` and `~/.sibyl/plugins` exist, and loads/creates/validates `~/.sibyl/config.json` (all on every invocation).
 - `src/plugin-loader.ts` — assembles the active plugin set: builtin plugins + external (on-disk) plugins; validates the external ones.
 - `src/plugins/config.ts` — `getBuiltinPlugins()`, the in-repo builtin plugin registry.
+- `src/utils.ts` — pure helpers (`isValidHttpUrl`).
+- `src/exit.ts` — `exit()`, the single wrapper around `process.exit` (see Conventions).
 - `src/@types/` — `plugin.ts` (plugin contract) and `sibyl-config.ts` (config shape).
 
 ### Plugin system (the core concept)

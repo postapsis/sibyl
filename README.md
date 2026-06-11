@@ -16,13 +16,13 @@ Currently in development.
 
 ## Commands
 
-| Command           | Description                                                                                                                   |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `search`          | Searches the web <br/>`sibyl search "react vite boostrap"`                                                                    |
-| `fetch`           | Gets the content of a site in token-efficient markdown <br/>`sibyl fetch https://vite.dev/guide`                              |
-| `ask`             | Asks a query using LLM from a site's content <br/>`sibyl ask https://vite.dev/guide "how to start a react project wiht vite"` |
-| `--help`, `-h`    | Show help.                                                                                                                    |
-| `--version`, `-v` | Show version.                                                                                                                 |
+| Command        | Description                                                                                                                   |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `search`       | Searches the web <br/>`sibyl search "react vite boostrap"`                                                                    |
+| `fetch`        | Gets the content of a site in token-efficient markdown <br/>`sibyl fetch https://vite.dev/guide`                              |
+| `ask`          | Asks a query using LLM from a site's content <br/>`sibyl ask https://vite.dev/guide "how to start a react project wiht vite"` |
+| `--help`, `-h` | Show help.                                                                                                                    |
+| `--version`    | Show version.                                                                                                                 |
 
 ## Configuration
 

@@ -2,8 +2,7 @@
  * Author: Jamius Siam
  * Since: 07/06/2026
  */
-vi.mock("./utils.ts", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./utils.ts")>()),
+vi.mock("./exit.ts", () => ({
   exit: vi.fn(() => {
     throw new Error("process.exit");
   }),
@@ -20,7 +19,7 @@ import {
   loadOrCreatePluginsDir,
   writeDefaultSibylConfig,
 } from "./setup.ts";
-import { exit } from "./utils.ts";
+import { exit } from "./exit.ts";
 
 const DEFAULT_CONFIG: SibylConfig = {
   plugins: {
