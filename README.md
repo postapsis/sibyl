@@ -68,6 +68,16 @@ the same name; anything not listed here falls back to the real environment. For 
 Each builtin plugin reads the variables below (set them via `variables` or the real environment, per the precedence rule
 above). A **required** variable causes the plugin to error if it is unset.
 
+#### `builtin-searxng-search` — `search`
+
+| Variable                        | Required | Default                 | Description                                                                        |
+| ------------------------------- | -------- | ----------------------- | ---------------------------------------------------------------------------------- |
+| `SIBYL_SEARXNG_URL`             | No       | `http://localhost:8080` | Base URL of a running SearXNG instance; `sibyl` GETs `/search` with `format=json`. |
+| `SIBYL_SEARXNG_ENGINES`         | No       | _(none)_                | Comma-separated SearXNG engines to query (e.g. `google`); omitted when unset.      |
+| `SIBYL_SHOW_SEARCH_DESCRIPTION` | No       | `true`                  | When `"true"`, includes result content in the output.                              |
+
+Requires a SearXNG instance with the **JSON output format enabled**. See more at [https://github.com/searxng/searxng/discussions/3542](https://github.com/searxng/searxng/discussions/3542)
+
 #### `builtin-crawl4ai-fetch` — `fetch`
 
 | Variable             | Required | Default                  | Description                                                                        |

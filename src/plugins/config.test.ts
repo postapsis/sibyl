@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { getBuiltinPlugins } from "./config.ts";
 
 describe("getBuiltinPlugins", () => {
-  it("returns the six builtin plugins with the expected name/type and a fn", () => {
+  it("returns the seven builtin plugins with the expected name/type and a fn", () => {
     const plugins = getBuiltinPlugins();
 
     expect(plugins.map((p) => [p.name, p.type])).toEqual([
@@ -16,6 +16,7 @@ describe("getBuiltinPlugins", () => {
       ["builtin-brightdata-fetch", "fetch"],
       ["builtin-crawl4ai-fetch", "fetch"],
       ["builtin-parse-htmlToMd", "parse"],
+      ["builtin-searxng-search", "search"],
     ]);
 
     for (const plugin of plugins) {
