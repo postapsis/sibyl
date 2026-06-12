@@ -1,5 +1,5 @@
 # .github/workflows/ci.yaml
-# Lints and tests sibyl every time a commit is pushed to the remote repository.
+# Lints and tests sibyl on pushes to main and on all pull requests.
 
 name: CI
 on:
