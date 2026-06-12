@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { SilbylPlugin } from "./main.ts";
 import type { PluginContext } from "../../@types/plugin.ts";
 
-const context = {} as PluginContext;
+const context: PluginContext = { configuredPlugins: {}, allPlugins: [], getPlugin: () => null };
 
 const ARTICLE_HTML = `<!doctype html>
 <html>
