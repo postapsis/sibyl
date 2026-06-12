@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm build` — compile `src` → `dist` with `tsc`.
 - `pnpm start` — run the compiled CLI (`node dist/cli.js`).
 - `pnpm typecheck` — `tsc --noEmit`. Run after type-level changes; the build is strict (see below).
-- `pnpm lint` — ESLint over the repo.
+- `pnpm lint` — ESLint + Prettier check over the repo.
 - `pnpm format` — Prettier write.
 - `pnpm test` — run the Vitest suite once (`vitest run`). `pnpm test:watch` for watch mode, `pnpm test:coverage` for a coverage report.
 

@@ -5,27 +5,33 @@
 export interface SearchPlugin {
   name: string;
   type: "search";
-  fn: (query: string) => Promise<string>;
+  fn: (query: string, context: PluginContext) => Promise<string>;
 }
 
 export interface FetchPlugin {
   name: string;
   type: "fetch";
-  fn: (url: string) => Promise<string>;
+  fn: (url: string, context: PluginContext) => Promise<string>;
 }
 
 export interface AskPlugin {
   name: string;
   type: "ask";
-  fn: (src: string, query: string) => Promise<string>;
+  fn: (src: string, query: string, context: PluginContext) => Promise<string>;
 }
 
 export interface ParsePlugin {
   name: string;
   type: "parse";
-  fn: (html: string) => Promise<string>;
+  fn: (html: string, context: PluginContext) => Promise<string>;
 }
 
 export type PluginTypeDeclaration = SearchPlugin | FetchPlugin | AskPlugin | ParsePlugin;
 
 export type PluginType = "search" | "fetch" | "ask" | "parse";
+
+export interface PluginContext {
+  configuredPlugins: PluginTypeDeclaration[];
+  allPlugins: PluginTypeDeclaration[];
+  getPlugin: (name: string) => PluginTypeDeclaration | null;
+}

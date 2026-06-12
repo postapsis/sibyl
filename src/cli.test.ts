@@ -23,8 +23,19 @@ import { main } from "./cli.ts";
 import { loadOrCreateConfigFile } from "./setup.ts";
 import { loadPlugins } from "./plugin-loader.ts";
 import { exit } from "./exit.ts";
-import type { FetchPlugin, PluginTypeDeclaration, SearchPlugin } from "./@types/plugin.ts";
+import type {
+  FetchPlugin,
+  PluginContext,
+  PluginTypeDeclaration,
+  SearchPlugin,
+} from "./@types/plugin.ts";
 import type { SibylConfig } from "./@types/sibyl-config.ts";
+
+const contextMatcher = expect.objectContaining({
+  configuredPlugins: expect.any(Array),
+  allPlugins: expect.any(Array),
+  getPlugin: expect.any(Function),
+});
 
 let searchFn: Mock;
 let fetchFn: Mock;
@@ -86,7 +97,7 @@ describe("dispatch & argument validation", () => {
   it("joins and trims the search query before passing it to the plugin", async () => {
     await main(["search", "react", "vite"]);
 
-    expect(searchFn).toHaveBeenCalledWith("react vite");
+    expect(searchFn).toHaveBeenCalledWith("react vite", contextMatcher);
     expect(console.log).toHaveBeenCalledWith("search result");
   });
 
@@ -108,7 +119,7 @@ describe("dispatch & argument validation", () => {
   it("passes a valid url to the fetch plugin", async () => {
     await main(["fetch", "https://vite.dev"]);
 
-    expect(fetchFn).toHaveBeenCalledWith("https://vite.dev");
+    expect(fetchFn).toHaveBeenCalledWith("https://vite.dev", contextMatcher);
     expect(console.log).toHaveBeenCalledWith("fetch result");
   });
 
@@ -150,9 +161,22 @@ describe("handleSearch", () => {
   it("logs the plugin result on success", async () => {
     await main(["search", "react"]);
 
-    expect(searchFn).toHaveBeenCalledWith("react");
+    expect(searchFn).toHaveBeenCalledWith("react", contextMatcher);
     expect(console.log).toHaveBeenCalledWith("search result");
     expect(exit).not.toHaveBeenCalled();
+  });
+
+  it("passes a context with configuredPlugins, allPlugins and getPlugin to the plugin", async () => {
+    await main(["search", "react"]);
+
+    const context = searchFn.mock.calls[0]?.[1] as PluginContext;
+
+    expect(context).not.toBeNull();
+    expect(context.allPlugins).toBe(plugins);
+    expect(context.configuredPlugins).toEqual([plugins[0], plugins[1]]);
+    expect(context.getPlugin("test-search")).toBe(plugins[0]);
+    expect(context.getPlugin("test-fetch")).toBe(plugins[1]);
+    expect(context.getPlugin("nope")).toBeNull();
   });
 
   it("errors when the plugin rejects", async () => {
@@ -196,7 +220,7 @@ describe("handleFetch", () => {
   it("logs the plugin result on success", async () => {
     await main(["fetch", "https://vite.dev"]);
 
-    expect(fetchFn).toHaveBeenCalledWith("https://vite.dev");
+    expect(fetchFn).toHaveBeenCalledWith("https://vite.dev", contextMatcher);
     expect(console.log).toHaveBeenCalledWith("fetch result");
     expect(exit).not.toHaveBeenCalled();
   });
