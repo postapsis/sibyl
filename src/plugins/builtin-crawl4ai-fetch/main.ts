@@ -4,7 +4,7 @@
  */
 import type { FetchPlugin, ParsePlugin, PluginContext } from "../../@types/plugin.ts";
 
-export interface Result {
+interface Result {
   url: string;
   html: string;
   error_message: string;
