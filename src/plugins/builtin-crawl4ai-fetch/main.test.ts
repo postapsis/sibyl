@@ -79,7 +79,6 @@ describe("builtin-crawl4ai-fetch", () => {
     await expect(fetchFn(url, context)).rejects.toThrow(
       "Crawl4AI fetch failed: 500 Internal Server Error",
     );
-    expect(warnSpy).toHaveBeenCalled();
   });
 
   it("warns and rethrows when Crawl4AI is unreachable (container not running)", async () => {

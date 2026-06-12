@@ -20,8 +20,10 @@ async function fetchFn(url: string, context: PluginContext): Promise<string> {
   const crawl4AiUrl = process.env.SIBYL_CRAWL4AI_URL ?? "http://localhost:11235";
   const crawl4AiCrawlApiUrl = crawl4AiUrl + "/crawl";
 
+  let res: Response;
+
   try {
-    const res = await fetch(crawl4AiCrawlApiUrl, {
+    res = await fetch(crawl4AiCrawlApiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -43,34 +45,6 @@ async function fetchFn(url: string, context: PluginContext): Promise<string> {
         },
       }),
     });
-
-    if (!res.ok) {
-      throw new Error(`Crawl4AI fetch failed: ${res.status} ${res.statusText}`);
-    }
-
-    const body = (await res.json()) as Craw4AiResult;
-
-    if (!body.success) {
-      throw new Error("Crawl4AI fetch failed: Craw4AI success response false");
-    }
-
-    if (!body.results || body.results?.length === 0) {
-      return `No content for ${url}`;
-    }
-
-    const html = body.results[0]?.html;
-
-    if (!html) {
-      return `No content for ${url}`;
-    }
-
-    const parsePlugin = context.configuredPlugins.parse as ParsePlugin;
-
-    if (!parsePlugin) {
-      return html;
-    }
-
-    return parsePlugin.fn(html, context);
   } catch (err) {
     console.warn(
       `Is Crawl4AI reachable on ${crawl4AiUrl}?
@@ -83,6 +57,34 @@ You can run it with:
 
     throw err;
   }
+
+  if (!res.ok) {
+    throw new Error(`Crawl4AI fetch failed: ${res.status} ${res.statusText}`);
+  }
+
+  const body = (await res.json()) as Craw4AiResult;
+
+  if (!body.success) {
+    throw new Error("Crawl4AI fetch failed: Craw4AI success response false");
+  }
+
+  if (!body.results || body.results?.length === 0) {
+    return `No content for ${url}`;
+  }
+
+  const html = body.results[0]?.html;
+
+  if (!html) {
+    return `No content for ${url}`;
+  }
+
+  const parsePlugin = context.configuredPlugins.parse as ParsePlugin;
+
+  if (!parsePlugin) {
+    return html;
+  }
+
+  return parsePlugin.fn(html, context);
 }
 
 export const SilbylPlugin: FetchPlugin = {
