@@ -3,6 +3,7 @@
  * Since: 06/06/2026
  */
 import type { SearchPlugin } from "../../@types/plugin.ts";
+import { stripSearchResultDatePrefix } from "../../utils.ts";
 
 interface BrightDataOrganicResult {
   title: string;
@@ -70,6 +71,9 @@ async function searchFn(query: string) {
       let description = r.description;
 
       if (showDescription && description) {
+        // We strip the leading localized date prefix
+        description = stripSearchResultDatePrefix(description);
+
         // We strip the ending "Read more" text here if it's present
         if (PATTERN_READ_MORE.test(description)) {
           description = description.replace(PATTERN_READ_MORE, "").concat("...");

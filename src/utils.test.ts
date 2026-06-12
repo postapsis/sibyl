@@ -3,7 +3,7 @@
  * Since: 10/06/2026
  */
 import { describe, expect, it } from "vitest";
-import { isValidHttpUrl } from "./utils.ts";
+import { isValidHttpUrl, stripSearchResultDatePrefix } from "./utils.ts";
 
 describe("isValidHttpUrl", () => {
   it.each([
@@ -32,4 +32,25 @@ describe("isValidHttpUrl", () => {
       expect(isValidHttpUrl(value)).toBe(false);
     },
   );
+});
+
+describe("stripSearchResultDatePrefix", () => {
+  it.each([
+    ["১৫ সেপ, ২০২৫ · In this React tutorial", "In this React tutorial"],
+    ["Sep 15, 2025 · Build websites and projects", "Build websites and projects"],
+    ["2025年9月15日 · これはReactチュートリアルです", "これはReactチュートリアルです"],
+    ["15. Sept. 2025 · Beschreibung des Tutorials", "Beschreibung des Tutorials"],
+    ["१५ सित॰, २०२५ · हिंदी विवरण", "हिंदी विवरण"],
+    ["١٥ سبتمبر ٢٠٢٥ · وصف عربي", "وصف عربي"],
+  ])("strips the leading date prefix from %j", (input, expected) => {
+    expect(stripSearchResultDatePrefix(input)).toBe(expected);
+  });
+
+  it.each([
+    "In this React tutorial, build websites",
+    "React · A JavaScript library for building UIs",
+    "",
+  ])("leaves %j unchanged when there is no leading date prefix", (input) => {
+    expect(stripSearchResultDatePrefix(input)).toBe(input);
+  });
 });

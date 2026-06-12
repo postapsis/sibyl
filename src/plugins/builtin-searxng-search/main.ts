@@ -3,6 +3,7 @@
  * Since: 13/06/2026
  */
 import type { SearchPlugin } from "../../@types/plugin.ts";
+import { stripSearchResultDatePrefix } from "../../utils.ts";
 
 interface Result {
   url: string;
@@ -62,7 +63,7 @@ Ensure the JSON output format is enabled (see https://github.com/searxng/searxng
       const title = r.title ?? "(untitled)";
 
       if (showDescription && r.content) {
-        return `${title}\n${r.url}\n${r.content}`;
+        return `${title}\n${r.url}\n${stripSearchResultDatePrefix(r.content)}`;
       } else {
         return `${title}\n${r.url}`;
       }
