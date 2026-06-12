@@ -1,8 +1,11 @@
 # .github/workflows/ci.yaml
-# Lints and tests sibyl every time a commit is pushed to the remote repository.
+# Lints and tests sibyl on pushes to main and on all pull requests.
 
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
 jobs:
   ci:
     name: CI
@@ -21,5 +24,10 @@ jobs:
         run: pnpm install
       - name: Lint
         run: pnpm lint
-      - name: Test
-        run: pnpm test
+      - name: Test with Coverage
+        run: pnpm test:coverage
+      - name: Upload coverage results to Codecov
+        uses: codecov/codecov-action@04b047e8bb82a0c002c8312c1c880fbc6a999d45
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: postapsis/sibyl

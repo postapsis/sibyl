@@ -2,6 +2,8 @@
 
 [![POST/APSIS Sibly Page](https://img.shields.io/badge/made_by-POST%2FAPSIS-%23000000)](https://postapsis.com/sibyl)
 [![sibyl License Page](https://img.shields.io/badge/license-Apache_2.0-brightgreen)](https://raw.githubusercontent.com/postapsis/sibyl/refs/heads/main/LICENSE)
+[![sibyl CI Status](https://github.com/postapsis/sibyl/actions/workflows/ci.yaml/badge.svg)](https://github.com/postapsis/sibyl/actions/workflows/ci.yaml)
+[![codecov](https://codecov.io/gh/postapsis/sibyl/branch/main/graph/badge.svg)](https://codecov.io/gh/postapsis/sibyl)
 <br/>
 
 ---
