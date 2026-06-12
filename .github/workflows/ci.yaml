@@ -2,7 +2,10 @@
 # Lints and tests sibyl every time a commit is pushed to the remote repository.
 
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
 jobs:
   ci:
     name: CI
