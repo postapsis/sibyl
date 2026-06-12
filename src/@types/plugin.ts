@@ -31,7 +31,7 @@ export type PluginTypeDeclaration = SearchPlugin | FetchPlugin | AskPlugin | Par
 export type PluginType = "search" | "fetch" | "ask" | "parse";
 
 export interface PluginContext {
-  configuredPlugins: PluginTypeDeclaration[];
+  configuredPlugins: Partial<Record<PluginType, PluginTypeDeclaration>>;
   allPlugins: PluginTypeDeclaration[];
   getPlugin: (name: string) => PluginTypeDeclaration | null;
 }
