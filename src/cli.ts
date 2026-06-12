@@ -5,7 +5,12 @@
  * Since: 06/06/2026
  */
 import { loadOrCreateConfigDir, loadOrCreateConfigFile, loadOrCreatePluginsDir } from "./setup.ts";
-import type { FetchPlugin, PluginTypeDeclaration, SearchPlugin } from "./@types/plugin.ts";
+import type {
+  FetchPlugin,
+  PluginContext,
+  PluginTypeDeclaration,
+  SearchPlugin,
+} from "./@types/plugin.ts";
 import type { SibylConfig } from "./@types/sibyl-config.ts";
 import { loadPlugins } from "./plugin-loader.ts";
 import { isValidHttpUrl } from "./utils.ts";
@@ -19,6 +24,7 @@ export async function main(argv: string[]): Promise<void> {
   const config = loadOrCreateConfigFile();
 
   const plugins = await loadPlugins();
+  const context = buildPluginContext(plugins, config);
 
   const [command, ...rest] = argv;
 
@@ -37,7 +43,7 @@ export async function main(argv: string[]): Promise<void> {
         exit(1);
       }
 
-      await handleSearch(plugins, config, query);
+      await handleSearch(plugins, config, query, context);
       break;
     }
     case "fetch": {
@@ -53,7 +59,7 @@ export async function main(argv: string[]): Promise<void> {
         exit(1);
       }
 
-      await handleFetch(plugins, config, url);
+      await handleFetch(plugins, config, url, context);
       break;
     }
     case "--version":
@@ -67,10 +73,22 @@ export async function main(argv: string[]): Promise<void> {
   }
 }
 
+function buildPluginContext(plugins: PluginTypeDeclaration[], config: SibylConfig): PluginContext {
+  const configuredPlugins = Object.entries(config.plugins)
+    .map(([type, name]) => plugins.find((plugin) => plugin.type === type && plugin.name === name))
+    .filter((plugin): plugin is PluginTypeDeclaration => plugin !== undefined);
+
+  const getPlugin = (name: string): PluginTypeDeclaration | null =>
+    plugins.find((plugin) => plugin.name === name) ?? null;
+
+  return { configuredPlugins, allPlugins: plugins, getPlugin };
+}
+
 async function handleSearch(
   plugins: PluginTypeDeclaration[],
   config: SibylConfig,
   query: string,
+  context: PluginContext,
 ): Promise<void> {
   const searchPluginName = config.plugins.search;
 
@@ -89,7 +107,7 @@ async function handleSearch(
   }
 
   try {
-    const result = await searchPlugin.fn(query);
+    const result = await searchPlugin.fn(query, context);
     console.log(result);
   } catch (error) {
     console.error(`Error searching using ${searchPlugin.name}: ${error}`);
@@ -101,6 +119,7 @@ async function handleFetch(
   plugins: PluginTypeDeclaration[],
   config: SibylConfig,
   url: string,
+  context: PluginContext,
 ): Promise<void> {
   const fetchPluginName = config.plugins.fetch;
 
@@ -119,7 +138,7 @@ async function handleFetch(
   }
 
   try {
-    const result = await fetchPlugin.fn(url);
+    const result = await fetchPlugin.fn(url, context);
     console.log(result);
   } catch (error) {
     console.error(`Error fetching using ${fetchPlugin.name}: ${error}`);
