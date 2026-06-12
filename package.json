@@ -48,6 +48,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^25.9.1",
+    "@types/turndown": "^5.0.6",
     "@vitest/coverage-v8": "^4.1.8",
     "eslint": "^10.4.1",
     "globals": "^17.6.0",
@@ -60,6 +61,10 @@
     "vitest": "^4.1.8"
   },
   "dependencies": {
-    "axios": "^1.17.0"
+    "axios": "^1.17.0",
+    "cheerio": "^1.2.0",
+    "defuddle": "^0.18.1",
+    "linkedom": "^0.18.12",
+    "turndown": "^7.2.4"
   }
 }
