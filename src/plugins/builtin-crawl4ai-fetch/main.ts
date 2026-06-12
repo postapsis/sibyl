@@ -19,7 +19,6 @@ interface Craw4AiResult {
 async function fetchFn(url: string, context: PluginContext): Promise<string> {
   const craw4AiUrl = process.env.SIBYL_CRAWL4AI_URL ?? "http://localhost:11235";
   const craw4AiCrawlApiUrl = craw4AiUrl + "/crawl";
-  const fallbackFetchPlugin = getFallbackFetchPlugin(context);
 
   try {
     const res = await fetch(craw4AiCrawlApiUrl, {
@@ -73,31 +72,8 @@ async function fetchFn(url: string, context: PluginContext): Promise<string> {
       `Is Crawl4Ai reachable on ${craw4AiUrl}?\nYou can run it with:\n\n\tdocker run -d --restart unless-stopped -p 11235:11235 unclecode/crawl4ai\n`,
     );
 
-    if (fallbackFetchPlugin) {
-      console.warn(`Crawl4AI fetch failed: ${err}`);
-      console.warn(`Using fallback fetch plugin: ${fallbackFetchPlugin.name}`);
-
-      return fallbackFetchPlugin.fn(url, context);
-    }
-
     throw err;
   }
-}
-
-function getFallbackFetchPlugin(context: PluginContext): FetchPlugin | null {
-  const fallbackFetchPluginName = process.env.SIBYL_CRAWL4AI_FALLBACK_PLUGIN_NAME;
-
-  if (!fallbackFetchPluginName) {
-    return null;
-  }
-
-  const fallbackFetchPlugin = context.getPlugin(fallbackFetchPluginName);
-
-  if (!fallbackFetchPlugin) {
-    return null;
-  }
-
-  return fallbackFetchPlugin as FetchPlugin;
 }
 
 export const SilbylPlugin: FetchPlugin = {
