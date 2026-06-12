@@ -126,12 +126,27 @@ Every `main.js` must provide a **single export**: `SilbylPlugin` — a declarati
 2. **`type`** — one of `"search"`, `"fetch"`, `"ask"`, or `"parse"`.
 3. **`fn`** — the function where your plugin's custom logic lives. Its signature depends on the `type`:
 
-| Type     | `fn` signature                                              |
-| -------- | ----------------------------------------------------------- |
-| `search` | `(query: string) => Promise<string>`                        |
-| `fetch`  | `(url: string) => Promise<string>`                          |
-| `ask`    | `(parsedContent: string, query: string) => Promise<string>` |
-| `parse`  | `(html: string) => Promise<string>`                         |
+| Type     | `fn` signature                                                                      |
+| -------- | ----------------------------------------------------------------------------------- |
+| `search` | `(query: string, context: PluginContext) => Promise<string>`                        |
+| `fetch`  | `(url: string, context: PluginContext) => Promise<string>`                          |
+| `ask`    | `(parsedContent: string, query: string, context: PluginContext) => Promise<string>` |
+| `parse`  | `(html: string, context: PluginContext) => Promise<string>`                         |
+
+#### The `context` argument
+
+Every `fn` also receives a **`context`** object as its **last** argument, giving your plugin access to the rest of the
+plugin system:
+
+| Field               | Description                                                                                                                                  |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `configuredPlugins` | The plugin selected for each type in your config, keyed by type — e.g. `context.configuredPlugins.parse`. Only configured types are present. |
+| `allPlugins`        | An array of every loaded plugin (builtins + your custom ones).                                                                               |
+| `getPlugin(name)`   | Returns the loaded plugin whose `name` matches, or `null` if none does.                                                                      |
+
+Each entry is a `{ name, type, fn }` object, so one plugin can invoke another — e.g. a `fetch` plugin can run the
+configured parser with `await context.configuredPlugins.parse?.fn(html, context)`. Using `context` is optional; ignore
+the argument if you don't need it.
 
 #### Example: A search plugin
 
