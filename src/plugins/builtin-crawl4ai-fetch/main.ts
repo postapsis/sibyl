@@ -13,7 +13,7 @@ interface Result {
 
 interface Craw4AiResult {
   success: boolean;
-  results: Result[];
+  results?: Result[];
 }
 
 async function fetchFn(url: string, context: PluginContext): Promise<string> {
@@ -54,7 +54,11 @@ async function fetchFn(url: string, context: PluginContext): Promise<string> {
       throw new Error("Crawl4AI fetch failed: Craw4AI success response false");
     }
 
-    const html = body.results?.[0]?.html;
+    if (!body.results || body.results?.length === 0) {
+      return `No content for ${url}`;
+    }
+
+    const html = body.results[0]?.html;
 
     if (!html) {
       return `No content for ${url}`;
