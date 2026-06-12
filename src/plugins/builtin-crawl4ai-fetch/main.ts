@@ -1,0 +1,107 @@
+/*
+ * Author: Jamius Siam
+ * Since: 12/06/2026
+ */
+import type { FetchPlugin, ParsePlugin, PluginContext } from "../../@types/plugin.ts";
+
+export interface Result {
+  url: string;
+  html: string;
+  error_message: string;
+  status_code: number;
+}
+
+interface Craw4AiResult {
+  success: boolean;
+  results: Result[];
+}
+
+async function fetchFn(url: string, context: PluginContext): Promise<string> {
+  const craw4AiUrl = process.env.SIBYL_CRAWL4AI_URL ?? "http://localhost:11235";
+  const craw4AiCrawlApiUrl = craw4AiUrl + "/crawl";
+  const fallbackFetchPlugin = getFallbackFetchPlugin(context);
+
+  try {
+    const res = await fetch(craw4AiCrawlApiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        urls: [url],
+        browser_config: {
+          headless: true,
+          user_agent:
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+        },
+        crawler_config: {
+          output_formats: ["html"],
+          magic: true,
+          clean_html: false,
+          simulate_user: true,
+          override_navigator: true,
+          wait_until: "networkidle",
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Crawl4AI fetch failed: ${res.status} ${res.statusText}}`);
+    }
+
+    const body = (await res.json()) as Craw4AiResult;
+
+    if (!body.success) {
+      throw new Error("Crawl4AI fetch failed: Craw4AI success response false");
+    }
+
+    const html = body.results?.[0]?.html;
+
+    if (!html) {
+      return `No content for ${url}`;
+    }
+
+    const parsePlugin = context.configuredPlugins.parse as ParsePlugin;
+
+    if (!parsePlugin) {
+      return html;
+    }
+
+    return parsePlugin.fn(html, context);
+  } catch (err) {
+    console.warn(
+      `Is Crawl4Ai reachable on ${craw4AiUrl}?\nYou can run it with:\n\n\tdocker run -d --restart unless-stopped -p 11235:11235 unclecode/crawl4ai\n`,
+    );
+
+    if (fallbackFetchPlugin) {
+      console.warn(`Crawl4AI fetch failed: ${err}`);
+      console.warn(`Using fallback fetch plugin: ${fallbackFetchPlugin.name}`);
+
+      return fallbackFetchPlugin.fn(url, context);
+    }
+
+    throw err;
+  }
+}
+
+function getFallbackFetchPlugin(context: PluginContext): FetchPlugin | null {
+  const fallbackFetchPluginName = process.env.SIBYL_CRAWL4AI_FALLBACK_PLUGIN_NAME;
+
+  if (!fallbackFetchPluginName) {
+    return null;
+  }
+
+  const fallbackFetchPlugin = context.getPlugin(fallbackFetchPluginName);
+
+  if (!fallbackFetchPlugin) {
+    return null;
+  }
+
+  return fallbackFetchPlugin as FetchPlugin;
+}
+
+export const SilbylPlugin: FetchPlugin = {
+  name: "builtin-crawl4ai-fetch",
+  type: "fetch",
+  fn: fetchFn,
+};
