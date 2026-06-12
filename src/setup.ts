@@ -6,6 +6,7 @@ import path from "path";
 import fs from "fs";
 import os from "os";
 import type { SibylConfig } from "./@types/sibyl-config.ts";
+import { exit } from "./exit.ts";
 
 export function loadOrCreateConfigDir(): void {
   const configDir = path.join(os.homedir(), ".sibyl");
@@ -55,9 +56,14 @@ export function writeDefaultSibylConfig(): void {
     plugins: {
       search: "builtin-exa-search",
       fetch: "builtin-exa-fetch",
-      parseHtml: "builtin-parseHtmlToMd",
+      parse: "builtin-parse-htmlToMd",
     },
-    variables: [],
+    variables: [
+      {
+        name: "SIBYL_SHOW_SEARCH_DESCRIPTION",
+        value: "true",
+      },
+    ],
   };
 
   fs.writeFileSync(configFile, JSON.stringify(sibylConfig, null, 2));
@@ -69,7 +75,8 @@ function validateConfig(config: SibylConfig) {
       console.error(
         `Invalid configuration: plugin name for type \`${type}\` must be a non-empty string.`,
       );
-      process.exit(1);
+
+      exit(1);
     }
   }
 }

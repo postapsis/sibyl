@@ -2,15 +2,17 @@
  * Author: Jamius Siam
  * Since: 06/06/2026
  */
-export async function fetchFn(url: string) {
+import type { FetchPlugin } from "../../@types/plugin.ts";
+
+async function fetchFn(url: string) {
   const apiKey = process.env.BRIGHTDATA_API_KEY;
   if (!apiKey) {
     throw new Error("Missing `BRIGHTDATA_API_KEY` environment variable.");
   }
 
-  const zone = process.env.BRIGHTDATA_WEB_UNLOCKER_API_NAME;
+  const zone = process.env.BRIGHTDATA_WEB_UNLOCKER_API_ZONE;
   if (!zone) {
-    throw new Error("Missing `BRIGHTDATA_WEB_UNLOCKER_API_NAME` environment variable.");
+    throw new Error("Missing `BRIGHTDATA_WEB_UNLOCKER_API_ZONE` environment variable.");
   }
 
   const res = await fetch("https://api.brightdata.com/request", {
@@ -36,7 +38,8 @@ export async function fetchFn(url: string) {
   return await res.text();
 }
 
-export const SilbylPlugin = {
+export const SilbylPlugin: FetchPlugin = {
   name: "builtin-brightdata-fetch",
   type: "fetch",
+  fn: fetchFn,
 };

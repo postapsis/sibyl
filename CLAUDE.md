@@ -10,8 +10,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm typecheck` — `tsc --noEmit`. Run after type-level changes; the build is strict (see below).
 - `pnpm lint` — ESLint over the repo.
 - `pnpm format` — Prettier write.
+- `pnpm test` — run the Vitest suite once (`vitest run`). `pnpm test:watch` for watch mode, `pnpm test:coverage` for a coverage report.
 
-No test runner is configured. `lint-staged` + Husky run Prettier on commit.
+Tests run on **Vitest** (`vitest.config.ts`) and are colocated as `*.test.ts` next to the code they cover (e.g. `src/plugins/builtin-exa-search/main.test.ts`). `lint-staged` + Husky run Prettier on commit.
+
+To test code that hard-exits, mock the exit seam: `vi.mock("./exit.ts", () => ({ exit: vi.fn(() => { throw new Error("process.exit"); }) }))`. Error paths then assert `rejects.toThrow("process.exit")` (or `toThrow(...)`) plus `expect(exit).toHaveBeenCalledWith(1)`.
 
 # Code writing instruction
 
@@ -26,38 +29,41 @@ Follow these rules when editing code in this project.
 
 `sibyl` is a CLI web search/crawl tool for AI Agents (`bin: sibyl` → `dist/cli.js`) with a filesystem-based plugin system. Key modules:
 
-- `src/cli.ts` — entry point. Ensures dirs + config exist, loads plugins, dispatches commands (`search`, `--help`, `--version`).
+- `src/cli.ts` — entry point. Ensures dirs + config exist, loads plugins, dispatches commands (`search`, `fetch`, `help`/`--help`/`-h`, `version`/`--version`). Only `search` and `fetch` are wired up via the async `handleSearch`/`handleFetch` helpers (awaited by `main`); `fetch` prints the fetch plugin's output directly (it no longer runs a `parse` plugin), so the `ask` and `parse` plugin types are part of the contract but not yet dispatched by any command. `main` is exported and only auto-runs when the file is the actual CLI entry (`import.meta.url` vs `process.argv[1]` guard), so tests can import it without side effects.
 - `src/setup.ts` — ensures `~/.sibyl` and `~/.sibyl/plugins` exist, and loads/creates/validates `~/.sibyl/config.json` (all on every invocation).
 - `src/plugin-loader.ts` — assembles the active plugin set: builtin plugins + external (on-disk) plugins; validates the external ones.
 - `src/plugins/config.ts` — `getBuiltinPlugins()`, the in-repo builtin plugin registry.
+- `src/utils.ts` — pure helpers (`isValidHttpUrl`).
+- `src/exit.ts` — `exit()`, the single wrapper around `process.exit` (see Conventions).
 - `src/@types/` — `plugin.ts` (plugin contract) and `sibyl-config.ts` (config shape).
 
 ### Plugin system (the core concept)
 
-Plugins live in `~/.sibyl/plugins/<name>/main.js` (note: `.js`, loaded at runtime via dynamic `import()`). A plugin module must provide **two exports**:
+Plugins live in `~/.sibyl/plugins/<name>/main.js` (note: `.js`, loaded at runtime via dynamic `import()`). A plugin module must provide a **single export** named `SilbylPlugin` (spelling is part of the contract) — a declaration object with three fields:
 
-1. `SilbylPlugin` — a declaration object with a non-empty `name: string` and `type: "search" | "fetch" | "ask" | "parseHtml"` (export name is literally `SilbylPlugin` — spelling is part of the contract).
-2. A **top-level function export** named per the type — `searchFn` / `fetchFn` / `askFn` / `parseHtmlFn`. `PLUGIN_FN_FIELD` in `plugin-loader.ts` maps `type` → this export name. Signatures (`src/@types/plugin.ts`):
-   - `searchFn(query) => Promise<string>`
-   - `fetchFn(url) => Promise<string>`
-   - `askFn(parsedContent, query) => Promise<string>`
-   - `parseHtmlFn(html) => Promise<string>`
+1. `name: string` — non-empty, identifies the plugin.
+2. `type: "search" | "fetch" | "ask" | "parse"`.
+3. `fn` — the function implementing the plugin's logic. Its signature depends on `type` (`src/@types/plugin.ts`):
+   - `search`: `(query) => Promise<string>`
+   - `fetch`: `(url) => Promise<string>`
+   - `ask`: `(parsedContent, query) => Promise<string>`
+   - `parse`: `(html) => Promise<string>`
 
-Key detail: the function is a **sibling module export**, not a field of `SilbylPlugin`. `plugin-loader.ts` reads `type` from `SilbylPlugin` but the fn from `plugin[fnField]`.
+Key detail: `fn` is a **field of `SilbylPlugin`**, so the loader validates and parses a single export. The external `SilbylPlugin` is structurally identical to the internal `PluginTypeDeclaration` `{ name, type, fn }`.
 
-- `validatePlugin` checks: `SilbylPlugin` is an object, `name` is a non-empty string, `type` is valid, and `plugin[fnField]` is a function. Invalid plugins are skipped with a `console.warn`.
-- The loader normalizes each plugin to the internal `PluginTypeDeclaration` shape `{ name, type, fn }` — `name` comes from `SilbylPlugin.name` (not the folder), and the type-specific export is stored under `fn`.
-- Folder names starting with `builtin-` are reserved/skipped. `src/plugins/` exists for in-repo (builtin) plugins.
+- `validatePlugin` checks: `SilbylPlugin` is an object, `name` is a non-empty string, `type` is valid (`type in PLUGIN_TYPES`), and `fn` is a function. Invalid plugins are skipped with a `console.warn`.
+- The loader returns each valid plugin as a `PluginTypeDeclaration` `{ name, type, fn }` — `name` comes from `SilbylPlugin.name` (not the folder).
+- Folder names starting with `builtin` are reserved/skipped. `src/plugins/` exists for in-repo (builtin) plugins.
 
-When changing the plugin shape, update all three together: `src/@types/plugin.ts` (types), `plugin-loader.ts` (validation + `PLUGIN_FN_FIELD` + normalization), and the consumer in `cli.ts`.
+When changing the plugin shape, update all three together: `src/@types/plugin.ts` (types), `plugin-loader.ts` (validation in `validatePlugin`), and the consumer in `cli.ts`.
 
 ### Builtin plugins
 
 `loadPlugins()` (`plugin-loader.ts`) returns `[...getBuiltinPlugins(), ...externalPlugins]`.
 
-- Builtins are **compiled into the binary, not loaded from disk**. `src/plugins/config.ts` statically imports each builtin's fn (e.g. `searchFn` from `src/plugins/builtin-exa-search/main.ts`) and returns ready `PluginTypeDeclaration` objects — they bypass `validatePlugin` and the whole `SilbylPlugin` / `main.js` discovery path.
+- Builtins are **compiled into the binary, not loaded from disk**. `src/plugins/config.ts` statically imports each builtin's `SilbylPlugin` (e.g. from `src/plugins/builtin-exa-search/main.ts`) and returns them as `PluginTypeDeclaration` objects — they bypass `validatePlugin` and the `main.js` discovery path. Each builtin `main.ts` types its `SilbylPlugin` with the matching interface (`SearchPlugin` / `FetchPlugin` / `ParsePlugin`) so `type` stays a literal.
 - Builtin names are prefixed `builtin-` by convention. External plugin folders starting with `builtin-` are rejected during discovery (reserved namespace), so user plugins cannot shadow a builtin.
-- To add a builtin: create `src/plugins/builtin-<x>/main.ts` exporting the type's fn, then register it in `getBuiltinPlugins()`.
+- To add a builtin: create `src/plugins/builtin-<x>/main.ts` exporting a typed `SilbylPlugin` (with `fn`), then register it in `getBuiltinPlugins()`.
 
 ### Config (`~/.sibyl/config.json`)
 

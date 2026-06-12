@@ -2,6 +2,8 @@
  * Author: Jamius Siam
  * Since: 06/06/2026
  */
+import type { FetchPlugin } from "../../@types/plugin.ts";
+
 interface ExaContentResult {
   url: string;
   title: string | null;
@@ -12,7 +14,7 @@ interface ExaContentsResponse {
   results: ExaContentResult[];
 }
 
-export async function fetchFn(url: string) {
+async function fetchFn(url: string) {
   const apiKey = process.env.EXA_API_KEY;
   if (!apiKey) {
     throw new Error("Missing `EXA_API_KEY` environment variable.");
@@ -43,7 +45,8 @@ export async function fetchFn(url: string) {
   return data.results.map((r) => r.text ?? "").join("\n\n");
 }
 
-export const SilbylPlugin = {
+export const SilbylPlugin: FetchPlugin = {
   name: "builtin-exa-fetch",
   type: "fetch",
+  fn: fetchFn,
 };
