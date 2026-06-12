@@ -29,7 +29,7 @@ Follow these rules when editing code in this project.
 
 `sibyl` is a CLI web search/crawl tool for AI Agents (`bin: sibyl` → `dist/cli.js`) with a filesystem-based plugin system. Key modules:
 
-- `src/cli.ts` — entry point. Ensures dirs + config exist, loads plugins, dispatches commands (`search`, `fetch`, `help`/`--help`/`-h`, `version`/`--version`). Only `search` and `fetch` are wired up via the async `handleSearch`/`handleFetch` helpers (awaited by `main`); `fetch` prints the fetch plugin's output directly (it no longer runs a `parse` plugin), so the `ask` and `parse` plugin types are part of the contract but not yet dispatched by any command. `main` is exported and only auto-runs when the file is the actual CLI entry (`import.meta.url` vs `process.argv[1]` guard), so tests can import it without side effects.
+- `src/cli.ts` — entry point. Ensures dirs + config exist, loads plugins, builds a `PluginContext` (`buildPluginContext`), and dispatches commands (`search`, `fetch`, `help`/`--help`/`-h`, `version`/`--version`). Only `search` and `fetch` are wired up via the async `handleSearch`/`handleFetch` helpers (awaited by `main`), each passing the context as the last arg to the selected plugin's `fn`. The `fetch` command prints the fetch plugin's output directly — the CLI doesn't dispatch a separate `parse` step, but a fetch plugin may itself run the configured parse plugin via `context.configuredPlugins.parse` (`builtin-brightdata-fetch` and `builtin-crawl4ai-fetch` do; `builtin-exa-fetch` returns content as-is). `ask` is part of the contract but not dispatched by any command. `main` is exported and only auto-runs when the file is the actual CLI entry (`import.meta.url` vs `process.argv[1]` guard), so tests can import it without side effects.
 - `src/setup.ts` — ensures `~/.sibyl` and `~/.sibyl/plugins` exist, and loads/creates/validates `~/.sibyl/config.json` (all on every invocation).
 - `src/plugin-loader.ts` — assembles the active plugin set: builtin plugins + external (on-disk) plugins; validates the external ones.
 - `src/plugins/config.ts` — `getBuiltinPlugins()`, the in-repo builtin plugin registry.
@@ -43,11 +43,13 @@ Plugins live in `~/.sibyl/plugins/<name>/main.js` (note: `.js`, loaded at runtim
 
 1. `name: string` — non-empty, identifies the plugin.
 2. `type: "search" | "fetch" | "ask" | "parse"`.
-3. `fn` — the function implementing the plugin's logic. Its signature depends on `type` (`src/@types/plugin.ts`):
-   - `search`: `(query) => Promise<string>`
-   - `fetch`: `(url) => Promise<string>`
-   - `ask`: `(parsedContent, query) => Promise<string>`
-   - `parse`: `(html) => Promise<string>`
+3. `fn` — the function implementing the plugin's logic. Every `fn` receives a `PluginContext` as its **last** argument; its signature otherwise depends on `type` (`src/@types/plugin.ts`):
+   - `search`: `(query, context) => Promise<string>`
+   - `fetch`: `(url, context) => Promise<string>`
+   - `ask`: `(parsedContent, query, context) => Promise<string>`
+   - `parse`: `(html, context) => Promise<string>`
+
+`PluginContext` (`src/@types/plugin.ts`) lets a plugin reach the rest of the plugin system: `{ configuredPlugins: Partial<Record<PluginType, PluginTypeDeclaration>>, allPlugins: PluginTypeDeclaration[], getPlugin(name): PluginTypeDeclaration | null }`. `configuredPlugins` is keyed by type (the per-type selection from config), `allPlugins` is everything loaded, and `getPlugin` looks up by name. It's built once in `cli.ts` and threaded to every `fn`; plugins consume it only if needed (a 1-arg `fn` still satisfies the contract via structural typing). This is how a fetch plugin runs the configured parser: `context.configuredPlugins.parse?.fn(html, context)`.
 
 Key detail: `fn` is a **field of `SilbylPlugin`**, so the loader validates and parses a single export. The external `SilbylPlugin` is structurally identical to the internal `PluginTypeDeclaration` `{ name, type, fn }`.
 

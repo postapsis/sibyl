@@ -18,13 +18,13 @@ Currently in development.
 
 ## Commands
 
-| Command        | Description                                                                                                                   |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `search`       | Searches the web <br/>`sibyl search "react vite boostrap"`                                                                    |
-| `fetch`        | Gets the content of a site in token-efficient markdown <br/>`sibyl fetch https://vite.dev/guide`                              |
-| `ask`          | Asks a query using LLM from a site's content <br/>`sibyl ask https://vite.dev/guide "how to start a react project wiht vite"` |
-| `--help`, `-h` | Show help.                                                                                                                    |
-| `--version`    | Show version.                                                                                                                 |
+| Command        | Description                                                                                                                  |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `search`       | Searches the web <br/>`sibyl search "react vite boostrap"`                                                                   |
+| `fetch`        | Gets the content of a site in token-efficient markdown <br/>`sibyl fetch https://vite.dev/guide`                             |
+| `ask`          | Asks a query using LLM from a site's content <br/>`sibyl ask https://vite.dev/guide "how to start a react project wth vite"` |
+| `--help`, `-h` | Show help.                                                                                                                   |
+| `--version`    | Show version.                                                                                                                |
 
 ## Configuration
 
@@ -57,7 +57,7 @@ written one!).
 #### `variables` section
 
 A list of `{ name, value }` pairs injected into the process environment at startup. Use this to provide secrets and
-settings (e.g. API keys) that plugins read via `process.env`.
+settings (e.g., API keys) that plugins read via `process.env`.
 
 Precedence: **config wins over the environment.** A variable defined here overrides any existing environment variable of
 the same name; anything not listed here falls back to the real environment. For example, a plugin reading
@@ -67,6 +67,14 @@ the same name; anything not listed here falls back to the real environment. For 
 
 Each builtin plugin reads the variables below (set them via `variables` or the real environment, per the precedence rule
 above). A **required** variable causes the plugin to error if it is unset.
+
+#### `builtin-crawl4ai-fetch` — `fetch`
+
+| Variable             | Required | Default                  | Description                                                                        |
+| -------------------- | -------- | ------------------------ | ---------------------------------------------------------------------------------- |
+| `SIBYL_CRAWL4AI_URL` | No       | `http://localhost:11235` | Base URL of a running Crawl4AI server; `sibyl` POSTs to `/crawl` to fetch the data |
+
+Requires a Crawl4AI server, e.g., via Docker. See more at [https://hub.docker.com/r/unclecode/crawl4ai](https://hub.docker.com/r/unclecode/crawl4ai)
 
 #### `builtin-exa-search` — `search`
 
