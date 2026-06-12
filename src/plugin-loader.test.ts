@@ -106,7 +106,7 @@ export const SilbylPlugin = {
     expect(customPlugin?.name).toEqual("test-search-plugin");
     expect(customPlugin?.type).toEqual("search");
     // @ts-ignore
-    await expect(customPlugin.fn("test")).resolves.toEqual("hello testing");
+    await expect(customPlugin.fn("testing")).resolves.toEqual("hello testing");
 
     expect(console.warn).not.toHaveBeenCalled();
     expect(console.error).not.toHaveBeenCalled();

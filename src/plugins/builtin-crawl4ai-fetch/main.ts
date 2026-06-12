@@ -17,11 +17,11 @@ interface Craw4AiResult {
 }
 
 async function fetchFn(url: string, context: PluginContext): Promise<string> {
-  const craw4AiUrl = process.env.SIBYL_CRAWL4AI_URL ?? "http://localhost:11235";
-  const craw4AiCrawlApiUrl = craw4AiUrl + "/crawl";
+  const crawl4AiUrl = process.env.SIBYL_CRAWL4AI_URL ?? "http://localhost:11235";
+  const crawl4AiCrawlApiUrl = crawl4AiUrl + "/crawl";
 
   try {
-    const res = await fetch(craw4AiCrawlApiUrl, {
+    const res = await fetch(crawl4AiCrawlApiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -45,7 +45,7 @@ async function fetchFn(url: string, context: PluginContext): Promise<string> {
     });
 
     if (!res.ok) {
-      throw new Error(`Crawl4AI fetch failed: ${res.status} ${res.statusText}}`);
+      throw new Error(`Crawl4AI fetch failed: ${res.status} ${res.statusText}`);
     }
 
     const body = (await res.json()) as Craw4AiResult;
@@ -73,7 +73,12 @@ async function fetchFn(url: string, context: PluginContext): Promise<string> {
     return parsePlugin.fn(html, context);
   } catch (err) {
     console.warn(
-      `Is Crawl4Ai reachable on ${craw4AiUrl}?\nYou can run it with:\n\n\tdocker run -d --restart unless-stopped -p 11235:11235 unclecode/crawl4ai\n`,
+      `Is Crawl4AI reachable on ${crawl4AiUrl}?
+DockerHub Page: https://hub.docker.com/r/unclecode/crawl4ai
+You can run it with:
+
+  docker run -d --restart unless-stopped -p 11235:11235 --shm-size=3g --name crawl4ai unclecode/crawl4ai:latest\n
+`,
     );
 
     throw err;
