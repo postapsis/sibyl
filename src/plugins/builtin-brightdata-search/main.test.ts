@@ -79,7 +79,7 @@ describe("builtin-brightdata-search", () => {
     );
   });
 
-  it("includes descriptions and strips a trailing `Read more` when show description flag is  enabled", async () => {
+  it("includes descriptions and strips a trailing `Read more` when show description flag is enabled", async () => {
     process.env.SIBYL_SHOW_SEARCH_DESCRIPTION = "true";
     stubFetch(
       makeResponse({

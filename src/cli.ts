@@ -122,7 +122,7 @@ async function handleFetch(
     const result = await fetchPlugin.fn(url);
     console.log(result);
   } catch (error) {
-    console.error(`Error searching using ${fetchPlugin.name}: ${error}`);
+    console.error(`Error fetching using ${fetchPlugin.name}: ${error}`);
     exit(1);
   }
 }

@@ -207,7 +207,7 @@ describe("handleFetch", () => {
     await expect(main(["fetch", "https://vite.dev"])).rejects.toThrow("process.exit");
 
     expect(console.error).toHaveBeenCalledWith(
-      expect.stringContaining("Error searching using test-fetch:"),
+      expect.stringContaining("Error fetching using test-fetch:"),
     );
     expect(exit).toHaveBeenCalledWith(1);
   });

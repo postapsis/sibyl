@@ -15,8 +15,7 @@ interface BrightDataSerpResult {
   organic?: BrightDataOrganicResult[];
 }
 
-const PATTERN_READ_MORE = /\.\.\.Read more$/i;
-const READ_MORE_SLICE_LENGTH = "Read more".length;
+const PATTERN_READ_MORE = /read more$/i;
 
 async function searchFn(query: string) {
   const apiKey = process.env.BRIGHTDATA_API_KEY;
@@ -72,9 +71,7 @@ async function searchFn(query: string) {
 
       if (showDescription && description) {
         // We strip the ending "Read more" text here if it's present
-        if (PATTERN_READ_MORE.test(description)) {
-          description = description.slice(0, -READ_MORE_SLICE_LENGTH).trim();
-        }
+        description = description.replace(PATTERN_READ_MORE, "");
 
         return `${title}\n${r.link}\n${description}`;
       } else {
