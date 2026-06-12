@@ -59,6 +59,7 @@ Ensure the JSON output format is enabled (see https://github.com/searxng/searxng
   }
 
   return data.results
+    .slice(0, Math.min(10, data.results.length))
     .map((r) => {
       const title = r.title ?? "(untitled)";
 
