@@ -407,7 +407,28 @@ throw new Error("loading error");
 
     expect(console.error).toHaveBeenCalledWith(
       "Error loading plugin from `test-broken-plugin`:",
-      "loading error",
+      new Error("loading error"),
+    );
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it("returns built-in plugins and logs an error when the plugins dir can't be read", async () => {
+    const permissionError = Object.assign(
+      new Error(`EACCES: permission denied, scandir '${pluginsDir}'`),
+      { code: "EACCES" },
+    );
+    vi.spyOn(fs, "readdirSync").mockImplementation(() => {
+      throw permissionError;
+    });
+
+    const builtinPlugins = getBuiltinPlugins();
+    const plugins = await loadPlugins();
+
+    expect(plugins).toEqual(builtinPlugins);
+
+    expect(console.error).toHaveBeenCalledWith(
+      `Error scanning plugins from ${pluginsDir}: `,
+      permissionError,
     );
     expect(console.warn).not.toHaveBeenCalled();
   });

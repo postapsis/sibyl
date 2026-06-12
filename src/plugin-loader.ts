@@ -27,6 +27,10 @@ async function loadExternalPlugins(): Promise<PluginTypeDeclaration[]> {
   const pluginDir = path.join(os.homedir(), ".sibyl", "plugins");
   const result: PluginTypeDeclaration[] = [];
 
+  if (!fs.existsSync(pluginDir)) {
+    return result;
+  }
+
   try {
     const folders = fs
       .readdirSync(pluginDir, { withFileTypes: true })
@@ -56,11 +60,13 @@ async function loadExternalPlugins(): Promise<PluginTypeDeclaration[]> {
         }
 
         result.push(validatedPlugin);
-      } catch (err: any) {
-        console.error(`Error loading plugin from \`${folder.name}\`:`, err.message);
+      } catch (err: unknown) {
+        console.error(`Error loading plugin from \`${folder.name}\`:`, err);
       }
     }
-  } catch (error) {}
+  } catch (error: unknown) {
+    console.error(`Error scanning plugins from ${pluginDir}: `, error);
+  }
 
   return result;
 }
