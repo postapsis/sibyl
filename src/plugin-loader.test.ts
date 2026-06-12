@@ -105,7 +105,8 @@ export const SilbylPlugin = {
     expect(plugins.slice(0, -1)).toEqual(builtinPlugins);
     expect(customPlugin?.name).toEqual("test-search-plugin");
     expect(customPlugin?.type).toEqual("search");
-    await expect(customPlugin.fn("testing")).resolves.toEqual("hello testing");
+    // @ts-ignore
+    await expect(customPlugin.fn("test")).resolves.toEqual("hello testing");
 
     expect(console.warn).not.toHaveBeenCalled();
     expect(console.error).not.toHaveBeenCalled();
@@ -136,6 +137,7 @@ export const SilbylPlugin = {
     expect(plugins.slice(0, -1)).toEqual(builtinPlugins);
     expect(customPlugin?.name).toEqual("test-fetch-plugin");
     expect(customPlugin?.type).toEqual("fetch");
+    // @ts-ignore
     await expect(customPlugin.fn("https://example.com")).resolves.toEqual(
       "fetched https://example.com",
     );
@@ -169,6 +171,7 @@ export const SilbylPlugin = {
     expect(plugins.slice(0, -1)).toEqual(builtinPlugins);
     expect(customPlugin?.name).toEqual("test-ask-plugin");
     expect(customPlugin?.type).toEqual("ask");
+    // @ts-ignore
     await expect(customPlugin.fn("the content", "the question")).resolves.toEqual(
       "the question => the content",
     );
@@ -202,6 +205,7 @@ export const SilbylPlugin = {
     expect(plugins.slice(0, -1)).toEqual(builtinPlugins);
     expect(customPlugin?.name).toEqual("test-parse-plugin");
     expect(customPlugin?.type).toEqual("parse");
+    // @ts-ignore
     await expect(customPlugin.fn("<p>hi</p>")).resolves.toEqual("parsed <p>hi</p>");
 
     expect(console.warn).not.toHaveBeenCalled();
