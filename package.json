@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Give your AI Agent the web, without the bloat — extensible and lightweight by design 🕷️",
   "type": "module",
+  "packageManager": "pnpm@11.5.1",
   "main": "dist/cli.js",
   "bin": {
     "sibyl": "dist/cli.js"
