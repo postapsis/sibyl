@@ -20,6 +20,7 @@ describe("getBuiltinPlugins", () => {
       ["builtin-searxng-search", "search"],
       ["builtin-alterlab-search", "search"],
       ["builtin-firecrawl-search", "search"],
+      ["builtin-firecrawl-fetch", "fetch"],
     ]);
 
     for (const plugin of plugins) {
