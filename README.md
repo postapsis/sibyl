@@ -18,8 +18,10 @@
 
 ## Quickstart
 
-**_sibyl_** ships with **SearXNG** (search) and **Crawl4AI** (fetch) as its default backends — both run
-locally with no API key. Get a working setup in a few steps:
+**_sibyl_** uses **SearXNG** (search) and **Crawl4AI** (fetch) by default to search and fetch webpages. Both run
+locally with no API key. Lots of other options are available (e.g., **Exa**, **Firecrawl**, **Brightdata**, etc.). Check the [Configuration](#configuration) section for more details.
+
+Get a working setup in a few steps:
 
 1. Install **_sibyl_** globally via NPM:
 
@@ -69,7 +71,8 @@ locally with no API key. Get a working setup in a few steps:
    sibyl search "how to use react with vite"
    ```
 
-5. Configure your settings! **_sibyl_** uses SearXNG and Crawl4AI by default to search and fetch webpages, but lots of other options are available (e.g., Exa, Brightdata, Firecrawl etc.). See more in the [Configuration](#configuration) section for more details.
+5. Configure your settings!\
+   Check the [Configuration](#configuration) section for more details.
 
 ## Commands
 
