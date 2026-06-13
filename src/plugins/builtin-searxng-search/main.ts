@@ -3,7 +3,11 @@
  * Since: 13/06/2026
  */
 import type { SearchPlugin } from "../../@types/plugin.ts";
-import { getSearchResultsLimit, stripSearchResultDatePrefix } from "../../utils.ts";
+import {
+  getSearchResultsLimit,
+  shouldShowSearchDescription,
+  stripSearchResultDatePrefix,
+} from "../../utils.ts";
 
 interface Result {
   url: string;
@@ -19,7 +23,7 @@ interface SearXngResult {
 
 async function searchFn(query: string) {
   const searxngUrl = process.env.SIBYL_SEARXNG_URL ?? "http://localhost:8080";
-  const showDescription = process.env.SIBYL_SHOW_SEARCH_DESCRIPTION === "true";
+  const showDescription = shouldShowSearchDescription();
   const limit = getSearchResultsLimit();
   const params = new URLSearchParams({ q: query, format: "json" });
 

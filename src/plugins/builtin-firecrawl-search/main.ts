@@ -3,7 +3,7 @@
  * Since: 13/06/2026
  */
 import type { SearchPlugin } from "../../@types/plugin.ts";
-import { getSearchResultsLimit } from "../../utils.ts";
+import { getSearchResultsLimit, shouldShowSearchDescription } from "../../utils.ts";
 
 interface FirecrawlWebResult {
   url: string;
@@ -25,7 +25,7 @@ async function searchFn(query: string) {
     throw new Error("Missing `FIRECRAWL_API_KEY` environment variable.");
   }
 
-  const showDescription = process.env.SIBYL_SHOW_SEARCH_DESCRIPTION === "true";
+  const showDescription = shouldShowSearchDescription();
   const limit = getSearchResultsLimit();
 
   const res = await fetch("https://api.firecrawl.dev/v2/search", {

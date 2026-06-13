@@ -7,6 +7,7 @@ import {
   collapseBlankLines,
   getSearchResultsLimit,
   isValidHttpUrl,
+  shouldShowSearchDescription,
   stripSearchResultDatePrefix,
 } from "./utils.ts";
 
@@ -114,5 +115,35 @@ describe("getSearchResultsLimit", () => {
   it.each(["0", "-3", "abc", "", "  "])("falls back to 10 for the invalid value %j", (value) => {
     process.env.SIBYL_SEARCH_RESULTS_LIMIT = value;
     expect(getSearchResultsLimit()).toBe(10);
+  });
+});
+
+describe("shouldShowSearchDescription", () => {
+  let envSnapshot: NodeJS.ProcessEnv;
+
+  beforeEach(() => {
+    envSnapshot = { ...process.env };
+    delete process.env.SIBYL_SHOW_SEARCH_DESCRIPTION;
+  });
+
+  afterEach(() => {
+    for (const key of Object.keys(process.env)) {
+      if (!(key in envSnapshot)) delete process.env[key];
+    }
+    Object.assign(process.env, envSnapshot);
+  });
+
+  it("defaults to true when `SIBYL_SHOW_SEARCH_DESCRIPTION` is unset", () => {
+    expect(shouldShowSearchDescription()).toBe(true);
+  });
+
+  it("returns true when set to `true`", () => {
+    process.env.SIBYL_SHOW_SEARCH_DESCRIPTION = "true";
+    expect(shouldShowSearchDescription()).toBe(true);
+  });
+
+  it.each(["false", "yes", "1", ""])("returns false for the non-`true` value %j", (value) => {
+    process.env.SIBYL_SHOW_SEARCH_DESCRIPTION = value;
+    expect(shouldShowSearchDescription()).toBe(false);
   });
 });

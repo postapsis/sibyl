@@ -3,7 +3,11 @@
  * Since: 13/06/2026
  */
 import type { SearchPlugin } from "../../@types/plugin.ts";
-import { getSearchResultsLimit, stripSearchResultDatePrefix } from "../../utils.ts";
+import {
+  getSearchResultsLimit,
+  shouldShowSearchDescription,
+  stripSearchResultDatePrefix,
+} from "../../utils.ts";
 
 interface AlterLabResult {
   url: string;
@@ -23,7 +27,7 @@ async function searchFn(query: string) {
     throw new Error("Missing `ALTERLAB_API_KEY` environment variable.");
   }
 
-  const showDescription = process.env.SIBYL_SHOW_SEARCH_DESCRIPTION === "true";
+  const showDescription = shouldShowSearchDescription();
   const limit = getSearchResultsLimit();
 
   const res = await fetch("https://api.alterlab.io/api/v1/search", {

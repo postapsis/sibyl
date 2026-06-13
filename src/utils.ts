@@ -32,3 +32,10 @@ export function getSearchResultsLimit(): number {
   const parsed = raw ? Number.parseInt(raw, 10) : NaN;
   return Number.isInteger(parsed) && parsed > 0 ? parsed : 10;
 }
+
+// Whether search plugins should include result descriptions. Defaults to true when
+// `SIBYL_SHOW_SEARCH_DESCRIPTION` is absent; otherwise it must equal "true".
+export function shouldShowSearchDescription(): boolean {
+  const raw = process.env.SIBYL_SHOW_SEARCH_DESCRIPTION;
+  return raw === undefined ? true : raw === "true";
+}

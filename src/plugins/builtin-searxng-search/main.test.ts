@@ -102,6 +102,7 @@ describe("builtin-searxng-search", () => {
   });
 
   it("formats results as title + url", async () => {
+    process.env.SIBYL_SHOW_SEARCH_DESCRIPTION = "false";
     stubFetch(
       makeResponse({
         json: {
@@ -118,8 +119,7 @@ describe("builtin-searxng-search", () => {
     );
   });
 
-  it("appends content when the show description flag is enabled", async () => {
-    process.env.SIBYL_SHOW_SEARCH_DESCRIPTION = "true";
+  it("appends content by default when the flag is unset", async () => {
     stubFetch(
       makeResponse({
         json: {

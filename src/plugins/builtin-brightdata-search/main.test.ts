@@ -39,6 +39,7 @@ beforeEach(() => {
   process.env.BRIGHTDATA_API_KEY = "test-key";
   process.env.BRIGHTDATA_SERP_API_ZONE = "test-zone";
   delete process.env.SIBYL_SEARCH_RESULTS_LIMIT;
+  delete process.env.SIBYL_SHOW_SEARCH_DESCRIPTION;
 });
 
 afterEach(() => {
@@ -66,7 +67,8 @@ describe("builtin-brightdata-search", () => {
     );
   });
 
-  it("formats results with title and link only when show description flag is disabled/missing", async () => {
+  it("formats results with title and link only when show description is disabled", async () => {
+    process.env.SIBYL_SHOW_SEARCH_DESCRIPTION = "false";
     stubFetch(
       makeResponse({
         json: {
@@ -83,8 +85,7 @@ describe("builtin-brightdata-search", () => {
     );
   });
 
-  it("includes descriptions and strips a trailing `Read more` when show description flag is enabled", async () => {
-    process.env.SIBYL_SHOW_SEARCH_DESCRIPTION = "true";
+  it("includes descriptions and strips a trailing `Read more` by default when the flag is unset", async () => {
     stubFetch(
       makeResponse({
         json: {
@@ -161,7 +162,7 @@ describe("builtin-brightdata-search", () => {
 
   it("requests `num` and slices to `SIBYL_SEARCH_RESULTS_LIMIT`", async () => {
     process.env.SIBYL_SEARCH_RESULTS_LIMIT = "2";
-    const fetchMock = stubFetch(
+    stubFetch(
       makeResponse({
         json: {
           organic: [

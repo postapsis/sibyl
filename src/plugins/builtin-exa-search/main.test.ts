@@ -38,6 +38,7 @@ beforeEach(() => {
   envSnapshot = { ...process.env };
   process.env.EXA_API_KEY = "test-key";
   delete process.env.SIBYL_SEARCH_RESULTS_LIMIT;
+  delete process.env.SIBYL_SHOW_SEARCH_DESCRIPTION;
 });
 
 afterEach(() => {
@@ -74,8 +75,7 @@ describe("builtin-exa-search", () => {
     );
   });
 
-  it("appends processed highlights when show description flag is enabled", async () => {
-    process.env.SIBYL_SHOW_SEARCH_DESCRIPTION = "true";
+  it("appends processed highlights by default when the flag is unset", async () => {
     const fetchMock = stubFetch(
       makeResponse({
         json: {
@@ -156,6 +156,28 @@ describe("builtin-exa-search", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.exa.ai/search",
       expect.objectContaining({ body: expect.stringContaining('"numResults":2') }),
+    );
+  });
+
+  it("omits highlights when `SIBYL_SHOW_SEARCH_DESCRIPTION` is false", async () => {
+    process.env.SIBYL_SHOW_SEARCH_DESCRIPTION = "false";
+    const fetchMock = stubFetch(
+      makeResponse({
+        json: {
+          results: [
+            { title: "First", url: "https://a.com", highlights: ["foo bar"] },
+            { title: "Second", url: "https://b.com", highlights: ["baz"] },
+          ],
+        },
+      }),
+    );
+
+    await expect(searchFn("react", context)).resolves.toEqual(
+      "First\nhttps://a.com\n\nSecond\nhttps://b.com",
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.exa.ai/search",
+      expect.objectContaining({ body: expect.stringContaining('"highlights":false') }),
     );
   });
 });

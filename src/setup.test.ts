@@ -27,7 +27,7 @@ const DEFAULT_CONFIG: SibylConfig = {
     fetch: "builtin-exa-fetch",
     parse: "builtin-parse-htmlToMd",
   },
-  variables: [{ name: "SIBYL_SHOW_SEARCH_DESCRIPTION", value: "true" }],
+  variables: [],
 };
 
 let home: string;
