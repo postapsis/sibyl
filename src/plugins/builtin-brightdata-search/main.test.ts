@@ -38,6 +38,7 @@ beforeEach(() => {
   envSnapshot = { ...process.env };
   process.env.BRIGHTDATA_API_KEY = "test-key";
   process.env.BRIGHTDATA_SERP_API_ZONE = "test-zone";
+  delete process.env.SIBYL_SEARCH_RESULTS_LIMIT;
 });
 
 afterEach(() => {
@@ -155,6 +156,25 @@ describe("builtin-brightdata-search", () => {
 
     await expect(searchFn("react", context)).rejects.toThrow(
       "Bright Data search failed: 403 Forbidden - denied",
+    );
+  });
+
+  it("requests `num` and slices to `SIBYL_SEARCH_RESULTS_LIMIT`", async () => {
+    process.env.SIBYL_SEARCH_RESULTS_LIMIT = "2";
+    const fetchMock = stubFetch(
+      makeResponse({
+        json: {
+          organic: [
+            { title: "First", link: "https://a.com" },
+            { title: "Second", link: "https://b.com" },
+            { title: "Third", link: "https://c.com" },
+          ],
+        },
+      }),
+    );
+
+    await expect(searchFn("react", context)).resolves.toEqual(
+      "First\nhttps://a.com\n\nSecond\nhttps://b.com",
     );
   });
 });

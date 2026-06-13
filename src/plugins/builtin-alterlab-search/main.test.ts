@@ -38,6 +38,7 @@ beforeEach(() => {
   envSnapshot = { ...process.env };
   process.env.ALTERLAB_API_KEY = "test-key";
   delete process.env.SIBYL_SHOW_SEARCH_DESCRIPTION;
+  delete process.env.SIBYL_SEARCH_RESULTS_LIMIT;
 });
 
 afterEach(() => {
@@ -132,6 +133,32 @@ describe("builtin-alterlab-search", () => {
         method: "POST",
         headers: expect.objectContaining({ "X-API-Key": "test-key" }),
         body: JSON.stringify({ query: "react vite", num_results: 10 }),
+      }),
+    );
+  });
+
+  it("requests and slices to `SIBYL_SEARCH_RESULTS_LIMIT`", async () => {
+    process.env.SIBYL_SEARCH_RESULTS_LIMIT = "2";
+    const fetchMock = stubFetch(
+      makeResponse({
+        json: {
+          query: "react vite",
+          results: [
+            { url: "https://a.com", title: "First", snippet: "", position: 1 },
+            { url: "https://b.com", title: "Second", snippet: "", position: 2 },
+            { url: "https://c.com", title: "Third", snippet: "", position: 3 },
+          ],
+        },
+      }),
+    );
+
+    await expect(searchFn("react vite", context)).resolves.toEqual(
+      "First\nhttps://a.com\n\nSecond\nhttps://b.com",
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.alterlab.io/api/v1/search",
+      expect.objectContaining({
+        body: JSON.stringify({ query: "react vite", num_results: 2 }),
       }),
     );
   });

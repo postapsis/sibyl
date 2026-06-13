@@ -24,3 +24,11 @@ export function stripSearchResultDatePrefix(text: string): string {
 export function collapseBlankLines(markdown: string): string {
   return markdown.replace(/\n{2,}/g, "\n").trim();
 }
+
+// Maximum number of results a search plugin should return. Read from
+// `SIBYL_SEARCH_RESULTS_LIMIT`, falling back to 10 when unset or invalid (non-numeric or <= 0).
+export function getSearchResultsLimit(): number {
+  const raw = process.env.SIBYL_SEARCH_RESULTS_LIMIT;
+  const parsed = raw ? Number.parseInt(raw, 10) : NaN;
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 10;
+}

@@ -68,13 +68,21 @@ the same name; anything not listed here falls back to the real environment. For 
 Each builtin plugin reads the variables below (set them via `variables` or the real environment, per the precedence rule
 above). A **required** variable causes the plugin to error if it is unset.
 
+All `search` plugins also honor the following environment variables
+
+1. **`SIBYL_SEARCH_RESULTS_LIMIT`** (default `10`): `sibyl` passes it to the search
+   provider's API when the provider supports a result-count parameter, and always slices the returned results down to this
+   limit.
+2. **`SIBYL_SHOW_SEARCH_DESCRIPTION`** (default `true`): When `"true"`, includes result snippet/description in the output.
+
 #### `builtin-searxng-search` — `search`
 
-| Variable                        | Required | Default                 | Description                                                                        |
-| ------------------------------- | -------- | ----------------------- | ---------------------------------------------------------------------------------- |
-| `SIBYL_SEARXNG_URL`             | No       | `http://localhost:8080` | Base URL of a running SearXNG instance; `sibyl` GETs `/search` with `format=json`. |
-| `SIBYL_SEARXNG_ENGINES`         | No       | _(none)_                | Comma-separated SearXNG engines to query (e.g. `google`); omitted when unset.      |
-| `SIBYL_SHOW_SEARCH_DESCRIPTION` | No       | `true`                  | When `"true"`, includes result content in the output.                              |
+| Variable                        | Required | Default                 | Description                                                                                                      |
+| ------------------------------- | -------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `SIBYL_SEARXNG_URL`             | No       | `http://localhost:8080` | Base URL of a running SearXNG instance; `sibyl` GETs `/search` with `format=json`.                               |
+| `SIBYL_SEARXNG_ENGINES`         | No       | _(none)_                | Comma-separated SearXNG engines to query (e.g. `google`); omitted when unset.                                    |
+| `SIBYL_SHOW_SEARCH_DESCRIPTION` | No       | `true`                  | When `"true"`, includes result content in the output.                                                            |
+| `SIBYL_SEARCH_RESULTS_LIMIT`    | No       | `10`                    | Maximum number of search results to return; passed to the provider when supported and always applied by slicing. |
 
 Requires a SearXNG instance with the **JSON output format enabled**. See more at [https://github.com/searxng/searxng/discussions/3542](https://github.com/searxng/searxng/discussions/3542)
 
@@ -88,10 +96,11 @@ Requires a Crawl4AI server, e.g., via Docker. See more at [https://hub.docker.co
 
 #### `builtin-exa-search` — `search`
 
-| Variable                        | Required | Default | Description                                              |
-| ------------------------------- | -------- | ------- | -------------------------------------------------------- |
-| `EXA_API_KEY`                   | Yes      | —       | Exa API key.                                             |
-| `SIBYL_SHOW_SEARCH_DESCRIPTION` | No       | `true`  | When `"true"`, includes result highlights in the output. |
+| Variable                        | Required | Default | Description                                                                                                      |
+| ------------------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `EXA_API_KEY`                   | Yes      | —       | Exa API key.                                                                                                     |
+| `SIBYL_SHOW_SEARCH_DESCRIPTION` | No       | `true`  | When `"true"`, includes result highlights in the output.                                                         |
+| `SIBYL_SEARCH_RESULTS_LIMIT`    | No       | `10`    | Maximum number of search results to return; passed to the provider when supported and always applied by slicing. |
 
 #### `builtin-exa-fetch` — `fetch`
 
@@ -101,10 +110,11 @@ Requires a Crawl4AI server, e.g., via Docker. See more at [https://hub.docker.co
 
 #### `builtin-firecrawl-search` — `search`
 
-| Variable                        | Required | Default | Description                                                |
-| ------------------------------- | -------- | ------- | ---------------------------------------------------------- |
-| `FIRECRAWL_API_KEY`             | Yes      | —       | Firecrawl API key (includes the `fc-` prefix).             |
-| `SIBYL_SHOW_SEARCH_DESCRIPTION` | No       | `true`  | When `"true"`, includes result descriptions in the output. |
+| Variable                        | Required | Default | Description                                                                                                      |
+| ------------------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `FIRECRAWL_API_KEY`             | Yes      | —       | Firecrawl API key (includes the `fc-` prefix).                                                                   |
+| `SIBYL_SHOW_SEARCH_DESCRIPTION` | No       | `true`  | When `"true"`, includes result descriptions in the output.                                                       |
+| `SIBYL_SEARCH_RESULTS_LIMIT`    | No       | `10`    | Maximum number of search results to return; passed to the provider when supported and always applied by slicing. |
 
 #### `builtin-firecrawl-fetch` — `fetch`
 
@@ -115,10 +125,11 @@ Requires a Crawl4AI server, e.g., via Docker. See more at [https://hub.docker.co
 
 #### `builtin-alterlab-search` — `search`
 
-| Variable                        | Required | Default | Description                                            |
-| ------------------------------- | -------- | ------- | ------------------------------------------------------ |
-| `ALTERLAB_API_KEY`              | Yes      | —       | AlterLab API key.                                      |
-| `SIBYL_SHOW_SEARCH_DESCRIPTION` | No       | `true`  | When `"true"`, includes result snippets in the output. |
+| Variable                        | Required | Default | Description                                                                                                      |
+| ------------------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `ALTERLAB_API_KEY`              | Yes      | —       | AlterLab API key.                                                                                                |
+| `SIBYL_SHOW_SEARCH_DESCRIPTION` | No       | `true`  | When `"true"`, includes result snippets in the output.                                                           |
+| `SIBYL_SEARCH_RESULTS_LIMIT`    | No       | `10`    | Maximum number of search results to return; passed to the provider when supported and always applied by slicing. |
 
 #### `builtin-alterlab-fetch` — `fetch`
 
@@ -128,13 +139,14 @@ Requires a Crawl4AI server, e.g., via Docker. See more at [https://hub.docker.co
 
 #### `builtin-brightdata-search` — `search`
 
-| Variable                        | Required | Default  | Description                                                |
-| ------------------------------- | -------- | -------- | ---------------------------------------------------------- |
-| `BRIGHTDATA_API_KEY`            | Yes      | —        | Bright Data API key.                                       |
-| `BRIGHTDATA_SERP_API_ZONE`      | Yes      | —        | Bright Data SERP API zone.                                 |
-| `SIBYL_SHOW_SEARCH_DESCRIPTION` | No       | `true`   | When `"true"`, includes result descriptions in the output. |
-| `BRIGHTDATA_SERP_API_LANGUAGE`  | No       | `en`     | Search language (Google `hl`).                             |
-| `BRIGHTDATA_SERP_API_COUNTRY`   | No       | _(none)_ | Search country (Google `gl`); omitted when unset.          |
+| Variable                        | Required | Default  | Description                                                                                                      |
+| ------------------------------- | -------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| `BRIGHTDATA_API_KEY`            | Yes      | —        | Bright Data API key.                                                                                             |
+| `BRIGHTDATA_SERP_API_ZONE`      | Yes      | —        | Bright Data SERP API zone.                                                                                       |
+| `SIBYL_SHOW_SEARCH_DESCRIPTION` | No       | `true`   | When `"true"`, includes result descriptions in the output.                                                       |
+| `BRIGHTDATA_SERP_API_LANGUAGE`  | No       | `en`     | Search language (Google `hl`).                                                                                   |
+| `BRIGHTDATA_SERP_API_COUNTRY`   | No       | _(none)_ | Search country (Google `gl`); omitted when unset.                                                                |
+| `SIBYL_SEARCH_RESULTS_LIMIT`    | No       | `10`     | Maximum number of search results to return; passed to the provider when supported and always applied by slicing. |
 
 #### `builtin-brightdata-fetch` — `fetch`
 

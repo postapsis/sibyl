@@ -3,6 +3,7 @@
  * Since: 06/06/2026
  */
 import type { SearchPlugin } from "../../@types/plugin.ts";
+import { getSearchResultsLimit } from "../../utils.ts";
 
 interface ExaResult {
   title: string | null;
@@ -21,6 +22,7 @@ async function searchFn(query: string) {
   }
 
   const showDescription = process.env.SIBYL_SHOW_SEARCH_DESCRIPTION === "true";
+  const limit = getSearchResultsLimit();
 
   const res = await fetch("https://api.exa.ai/search", {
     method: "POST",
@@ -30,6 +32,7 @@ async function searchFn(query: string) {
     },
     body: JSON.stringify({
       query,
+      numResults: limit,
       type: "auto",
       contents: {
         highlights: showDescription,
@@ -48,6 +51,7 @@ async function searchFn(query: string) {
   }
 
   return data.results
+    .slice(0, limit)
     .map((r) => {
       const title = r.title ?? "(untitled)";
       const highlights = r.highlights;

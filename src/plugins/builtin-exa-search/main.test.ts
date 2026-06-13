@@ -37,6 +37,7 @@ let envSnapshot: NodeJS.ProcessEnv;
 beforeEach(() => {
   envSnapshot = { ...process.env };
   process.env.EXA_API_KEY = "test-key";
+  delete process.env.SIBYL_SEARCH_RESULTS_LIMIT;
 });
 
 afterEach(() => {
@@ -132,6 +133,29 @@ describe("builtin-exa-search", () => {
 
     await expect(searchFn("react", context)).rejects.toThrow(
       "Exa search failed: 500 Internal Server Error - boom",
+    );
+  });
+
+  it("requests and slices to `SIBYL_SEARCH_RESULTS_LIMIT`", async () => {
+    process.env.SIBYL_SEARCH_RESULTS_LIMIT = "2";
+    const fetchMock = stubFetch(
+      makeResponse({
+        json: {
+          results: [
+            { title: "First", url: "https://a.com" },
+            { title: "Second", url: "https://b.com" },
+            { title: "Third", url: "https://c.com" },
+          ],
+        },
+      }),
+    );
+
+    await expect(searchFn("react", context)).resolves.toEqual(
+      "First\nhttps://a.com\n\nSecond\nhttps://b.com",
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.exa.ai/search",
+      expect.objectContaining({ body: expect.stringContaining('"numResults":2') }),
     );
   });
 });

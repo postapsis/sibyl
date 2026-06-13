@@ -3,7 +3,7 @@
  * Since: 06/06/2026
  */
 import type { SearchPlugin } from "../../@types/plugin.ts";
-import { stripSearchResultDatePrefix } from "../../utils.ts";
+import { getSearchResultsLimit, stripSearchResultDatePrefix } from "../../utils.ts";
 
 interface BrightDataOrganicResult {
   title: string;
@@ -29,6 +29,7 @@ async function searchFn(query: string) {
     throw new Error("Missing `BRIGHTDATA_SERP_API_ZONE` environment variable.");
   }
   const showDescription = process.env.SIBYL_SHOW_SEARCH_DESCRIPTION === "true";
+  const limit = getSearchResultsLimit();
 
   const language = process.env.BRIGHTDATA_SERP_API_LANGUAGE ?? "en";
   const country = process.env.BRIGHTDATA_SERP_API_COUNTRY ?? "";
@@ -66,6 +67,7 @@ async function searchFn(query: string) {
   }
 
   return organicResults.organic
+    .slice(0, limit)
     .map((r) => {
       const title = r.title ?? "(untitled)";
       let description = r.description;

@@ -50,6 +50,7 @@ beforeEach(() => {
   delete process.env.SIBYL_SEARXNG_URL;
   delete process.env.SIBYL_SEARXNG_ENGINES;
   delete process.env.SIBYL_SHOW_SEARCH_DESCRIPTION;
+  delete process.env.SIBYL_SEARCH_RESULTS_LIMIT;
 });
 
 afterEach(() => {
@@ -177,5 +178,24 @@ describe("builtin-searxng-search", () => {
 
     await expect(searchFn("react vite", context)).rejects.toThrow("ECONNREFUSED");
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("Is SearXNG reachable on"));
+  });
+
+  it("slices results to `SIBYL_SEARCH_RESULTS_LIMIT`", async () => {
+    process.env.SIBYL_SEARCH_RESULTS_LIMIT = "2";
+    stubFetch(
+      makeResponse({
+        json: {
+          results: [
+            { title: "First", url: "https://a.com", content: "", engine: "google" },
+            { title: "Second", url: "https://b.com", content: "", engine: "google" },
+            { title: "Third", url: "https://c.com", content: "", engine: "google" },
+          ],
+        },
+      }),
+    );
+
+    await expect(searchFn("react vite", context)).resolves.toEqual(
+      "First\nhttps://a.com\n\nSecond\nhttps://b.com",
+    );
   });
 });

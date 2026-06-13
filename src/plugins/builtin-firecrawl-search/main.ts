@@ -3,6 +3,7 @@
  * Since: 13/06/2026
  */
 import type { SearchPlugin } from "../../@types/plugin.ts";
+import { getSearchResultsLimit } from "../../utils.ts";
 
 interface FirecrawlWebResult {
   url: string;
@@ -25,6 +26,7 @@ async function searchFn(query: string) {
   }
 
   const showDescription = process.env.SIBYL_SHOW_SEARCH_DESCRIPTION === "true";
+  const limit = getSearchResultsLimit();
 
   const res = await fetch("https://api.firecrawl.dev/v2/search", {
     method: "POST",
@@ -32,7 +34,7 @@ async function searchFn(query: string) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: JSON.stringify({ query, limit: 10 }),
+    body: JSON.stringify({ query, limit }),
   });
 
   if (!res.ok) {
@@ -48,6 +50,7 @@ async function searchFn(query: string) {
   }
 
   return data.data.web
+    .slice(0, limit)
     .map((r) => {
       const title = r.title ?? "(untitled)";
 

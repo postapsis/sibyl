@@ -2,8 +2,13 @@
  * Author: Jamius Siam
  * Since: 10/06/2026
  */
-import { describe, expect, it } from "vitest";
-import { collapseBlankLines, isValidHttpUrl, stripSearchResultDatePrefix } from "./utils.ts";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  collapseBlankLines,
+  getSearchResultsLimit,
+  isValidHttpUrl,
+  stripSearchResultDatePrefix,
+} from "./utils.ts";
 
 describe("isValidHttpUrl", () => {
   it.each([
@@ -75,5 +80,39 @@ describe("collapseBlankLines", () => {
     ["", ""],
   ])("leaves %j unchanged", (input, expected) => {
     expect(collapseBlankLines(input)).toBe(expected);
+  });
+});
+
+describe("getSearchResultsLimit", () => {
+  let envSnapshot: NodeJS.ProcessEnv;
+
+  beforeEach(() => {
+    envSnapshot = { ...process.env };
+    delete process.env.SIBYL_SEARCH_RESULTS_LIMIT;
+  });
+
+  afterEach(() => {
+    for (const key of Object.keys(process.env)) {
+      if (!(key in envSnapshot)) delete process.env[key];
+    }
+    Object.assign(process.env, envSnapshot);
+  });
+
+  it("defaults to 10 when `SIBYL_SEARCH_RESULTS_LIMIT` is unset", () => {
+    expect(getSearchResultsLimit()).toBe(10);
+  });
+
+  it.each([
+    ["5", 5],
+    ["25", 25],
+    ["1", 1],
+  ])("returns the parsed limit for %j", (value, expected) => {
+    process.env.SIBYL_SEARCH_RESULTS_LIMIT = value;
+    expect(getSearchResultsLimit()).toBe(expected);
+  });
+
+  it.each(["0", "-3", "abc", "", "  "])("falls back to 10 for the invalid value %j", (value) => {
+    process.env.SIBYL_SEARCH_RESULTS_LIMIT = value;
+    expect(getSearchResultsLimit()).toBe(10);
   });
 });
