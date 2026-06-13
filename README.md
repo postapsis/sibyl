@@ -37,7 +37,3 @@ See the plugin development doc for more details at [docs/CREATING-PLUGINS.md](ht
 ## Contribution
 
 See the contribution doc for more details at [docs/CONTRIBUTION.md](https://github.com/postapsis/sibyl/blob/main/docs/CONTRIBUTION.md)
-
-## License
-
-Apache-2.0
