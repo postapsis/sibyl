@@ -23,11 +23,11 @@ import { exit } from "./exit.ts";
 
 const DEFAULT_CONFIG: SibylConfig = {
   plugins: {
-    search: "builtin-exa-search",
-    fetch: "builtin-exa-fetch",
+    search: "builtin-searxng-search",
+    fetch: "builtin-crawl4ai-fetch",
     parse: "builtin-parse-htmlToMd",
   },
-  variables: [{ name: "SIBYL_SHOW_SEARCH_DESCRIPTION", value: "true" }],
+  variables: [],
 };
 
 let home: string;

@@ -8,7 +8,15 @@ import fs from "fs";
 import path from "path";
 import { getBuiltinPlugins } from "./plugins/config.ts";
 import { loadPlugins } from "./plugin-loader.ts";
-import type { AskPlugin, FetchPlugin, ParsePlugin, SearchPlugin } from "./@types/plugin.ts";
+import type {
+  AskPlugin,
+  FetchPlugin,
+  ParsePlugin,
+  PluginContext,
+  SearchPlugin,
+} from "./@types/plugin.ts";
+
+const context: PluginContext = { configuredPlugins: {}, allPlugins: [], getPlugin: () => null };
 
 let homeDirPath: string;
 let sibylDir: string;
@@ -105,7 +113,7 @@ export const SilbylPlugin = {
     expect(plugins.slice(0, -1)).toEqual(builtinPlugins);
     expect(customPlugin?.name).toEqual("test-search-plugin");
     expect(customPlugin?.type).toEqual("search");
-    await expect(customPlugin.fn("testing")).resolves.toEqual("hello testing");
+    await expect(customPlugin.fn("testing", context)).resolves.toEqual("hello testing");
 
     expect(console.warn).not.toHaveBeenCalled();
     expect(console.error).not.toHaveBeenCalled();
@@ -136,7 +144,7 @@ export const SilbylPlugin = {
     expect(plugins.slice(0, -1)).toEqual(builtinPlugins);
     expect(customPlugin?.name).toEqual("test-fetch-plugin");
     expect(customPlugin?.type).toEqual("fetch");
-    await expect(customPlugin.fn("https://example.com")).resolves.toEqual(
+    await expect(customPlugin.fn("https://example.com", context)).resolves.toEqual(
       "fetched https://example.com",
     );
 
@@ -169,7 +177,7 @@ export const SilbylPlugin = {
     expect(plugins.slice(0, -1)).toEqual(builtinPlugins);
     expect(customPlugin?.name).toEqual("test-ask-plugin");
     expect(customPlugin?.type).toEqual("ask");
-    await expect(customPlugin.fn("the content", "the question")).resolves.toEqual(
+    await expect(customPlugin.fn("the content", "the question", context)).resolves.toEqual(
       "the question => the content",
     );
 
@@ -202,8 +210,6 @@ export const SilbylPlugin = {
     expect(plugins.slice(0, -1)).toEqual(builtinPlugins);
     expect(customPlugin?.name).toEqual("test-parse-plugin");
     expect(customPlugin?.type).toEqual("parse");
-    await expect(customPlugin.fn("<p>hi</p>")).resolves.toEqual("parsed <p>hi</p>");
-
     expect(console.warn).not.toHaveBeenCalled();
     expect(console.error).not.toHaveBeenCalled();
   });

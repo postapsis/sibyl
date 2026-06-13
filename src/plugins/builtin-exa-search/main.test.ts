@@ -4,8 +4,11 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SilbylPlugin } from "./main.ts";
+import type { PluginContext } from "../../@types/plugin.ts";
 
 const searchFn = SilbylPlugin.fn;
+
+const context: PluginContext = { configuredPlugins: {}, allPlugins: [], getPlugin: () => null };
 
 function makeResponse({
   ok = true,
@@ -34,6 +37,8 @@ let envSnapshot: NodeJS.ProcessEnv;
 beforeEach(() => {
   envSnapshot = { ...process.env };
   process.env.EXA_API_KEY = "test-key";
+  delete process.env.SIBYL_SEARCH_RESULTS_LIMIT;
+  delete process.env.SIBYL_SHOW_SEARCH_DESCRIPTION;
 });
 
 afterEach(() => {
@@ -45,10 +50,23 @@ afterEach(() => {
 });
 
 describe("builtin-exa-search", () => {
+  it("an AbortSignal is present on the fetch", async () => {
+    const fetchMock = stubFetch(makeResponse({ json: { results: [] } }));
+
+    await searchFn("react", context);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
   it("throws when `EXA_API_KEY` is missing", async () => {
     delete process.env.EXA_API_KEY;
 
-    await expect(searchFn("react")).rejects.toThrow("Missing `EXA_API_KEY` environment variable.");
+    await expect(searchFn("react", context)).rejects.toThrow(
+      "Missing `EXA_API_KEY` environment variable.",
+    );
   });
 
   it("formats results, using `(untitled)` for a null title", async () => {
@@ -63,13 +81,12 @@ describe("builtin-exa-search", () => {
       }),
     );
 
-    await expect(searchFn("react")).resolves.toEqual(
+    await expect(searchFn("react", context)).resolves.toEqual(
       "First\nhttps://a.com\n\n(untitled)\nhttps://b.com",
     );
   });
 
-  it("appends processed highlights when show description flag is enabled", async () => {
-    process.env.SIBYL_SHOW_SEARCH_DESCRIPTION = "true";
+  it("appends processed highlights by default when the flag is unset", async () => {
     const fetchMock = stubFetch(
       makeResponse({
         json: {
@@ -85,7 +102,7 @@ describe("builtin-exa-search", () => {
       }),
     );
 
-    await expect(searchFn("react")).resolves.toEqual(
+    await expect(searchFn("react", context)).resolves.toEqual(
       'First\nhttps://a.com\n"""foo ... bar line1 line2 double space"""\n\n(untitled)\nhttps://b.com',
     );
     expect(fetchMock).toHaveBeenCalledWith(
@@ -97,7 +114,7 @@ describe("builtin-exa-search", () => {
   it("calls the Exa search endpoint with the api key header", async () => {
     const fetchMock = stubFetch(makeResponse({ json: { results: [] } }));
 
-    await searchFn("react");
+    await searchFn("react", context);
 
     expect(fetchMock).toHaveBeenCalledWith(
       "https://api.exa.ai/search",
@@ -111,13 +128,13 @@ describe("builtin-exa-search", () => {
   it("returns a no-results message when `results` is empty", async () => {
     stubFetch(makeResponse({ json: { results: [] } }));
 
-    await expect(searchFn("react")).resolves.toEqual("No results for: react");
+    await expect(searchFn("react", context)).resolves.toEqual("No results for: react");
   });
 
   it("returns a no-results message when the response body is null", async () => {
     stubFetch(makeResponse({ json: null }));
 
-    await expect(searchFn("react")).resolves.toEqual("No results for: react");
+    await expect(searchFn("react", context)).resolves.toEqual("No results for: react");
   });
 
   it("throws when the response is not ok", async () => {
@@ -125,8 +142,53 @@ describe("builtin-exa-search", () => {
       makeResponse({ ok: false, status: 500, statusText: "Internal Server Error", text: "boom" }),
     );
 
-    await expect(searchFn("react")).rejects.toThrow(
+    await expect(searchFn("react", context)).rejects.toThrow(
       "Exa search failed: 500 Internal Server Error - boom",
+    );
+  });
+
+  it("requests and slices to `SIBYL_SEARCH_RESULTS_LIMIT`", async () => {
+    process.env.SIBYL_SEARCH_RESULTS_LIMIT = "2";
+    const fetchMock = stubFetch(
+      makeResponse({
+        json: {
+          results: [
+            { title: "First", url: "https://a.com" },
+            { title: "Second", url: "https://b.com" },
+            { title: "Third", url: "https://c.com" },
+          ],
+        },
+      }),
+    );
+
+    await expect(searchFn("react", context)).resolves.toEqual(
+      "First\nhttps://a.com\n\nSecond\nhttps://b.com",
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.exa.ai/search",
+      expect.objectContaining({ body: expect.stringContaining('"numResults":2') }),
+    );
+  });
+
+  it("omits highlights when `SIBYL_SHOW_SEARCH_DESCRIPTION` is false", async () => {
+    process.env.SIBYL_SHOW_SEARCH_DESCRIPTION = "false";
+    const fetchMock = stubFetch(
+      makeResponse({
+        json: {
+          results: [
+            { title: "First", url: "https://a.com", highlights: ["foo bar"] },
+            { title: "Second", url: "https://b.com", highlights: ["baz"] },
+          ],
+        },
+      }),
+    );
+
+    await expect(searchFn("react", context)).resolves.toEqual(
+      "First\nhttps://a.com\n\nSecond\nhttps://b.com",
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.exa.ai/search",
+      expect.objectContaining({ body: expect.stringContaining('"highlights":false') }),
     );
   });
 });

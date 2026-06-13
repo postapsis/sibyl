@@ -8,6 +8,7 @@ import { loadOrCreateConfigDir, loadOrCreateConfigFile, loadOrCreatePluginsDir }
 import type {
   FetchPlugin,
   PluginContext,
+  PluginType,
   PluginTypeDeclaration,
   SearchPlugin,
 } from "./@types/plugin.ts";
@@ -74,9 +75,13 @@ export async function main(argv: string[]): Promise<void> {
 }
 
 function buildPluginContext(plugins: PluginTypeDeclaration[], config: SibylConfig): PluginContext {
-  const configuredPlugins = Object.entries(config.plugins)
-    .map(([type, name]) => plugins.find((plugin) => plugin.type === type && plugin.name === name))
-    .filter((plugin): plugin is PluginTypeDeclaration => plugin !== undefined);
+  const configuredPlugins: Partial<Record<PluginType, PluginTypeDeclaration>> = {};
+  for (const [type, name] of Object.entries(config.plugins)) {
+    const plugin = plugins.find((plugin) => plugin.type === type && plugin.name === name);
+    if (plugin) {
+      configuredPlugins[type as PluginType] = plugin;
+    }
+  }
 
   const getPlugin = (name: string): PluginTypeDeclaration | null =>
     plugins.find((plugin) => plugin.name === name) ?? null;

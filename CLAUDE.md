@@ -29,13 +29,15 @@ Follow these rules when editing code in this project.
 
 `sibyl` is a CLI web search/crawl tool for AI Agents (`bin: sibyl` → `dist/cli.js`) with a filesystem-based plugin system. Key modules:
 
-- `src/cli.ts` — entry point. Ensures dirs + config exist, loads plugins, dispatches commands (`search`, `fetch`, `help`/`--help`/`-h`, `version`/`--version`). Only `search` and `fetch` are wired up via the async `handleSearch`/`handleFetch` helpers (awaited by `main`); `fetch` prints the fetch plugin's output directly (it no longer runs a `parse` plugin), so the `ask` and `parse` plugin types are part of the contract but not yet dispatched by any command. `main` is exported and only auto-runs when the file is the actual CLI entry (`import.meta.url` vs `process.argv[1]` guard), so tests can import it without side effects.
+- `src/cli.ts` — entry point. Ensures dirs + config exist, loads plugins, builds a `PluginContext` (`buildPluginContext`), and dispatches commands (`search`, `fetch`, `help`/`--help`/`-h`, `version`/`--version`). Only `search` and `fetch` are wired up via the async `handleSearch`/`handleFetch` helpers (awaited by `main`), each passing the context as the last arg to the selected plugin's `fn`. The `fetch` command prints the fetch plugin's output directly — the CLI doesn't dispatch a separate `parse` step, but a fetch plugin may itself run the configured parse plugin via `context.configuredPlugins.parse` (`builtin-brightdata-fetch`, `builtin-crawl4ai-fetch`, and `builtin-alterlab-fetch` do; `builtin-firecrawl-fetch` does only in its raw-HTML mode; `builtin-exa-fetch` returns content as-is). `ask` is part of the contract but not dispatched by any command. `main` is exported and only auto-runs when the file is the actual CLI entry (`import.meta.url` vs `process.argv[1]` guard), so tests can import it without side effects.
 - `src/setup.ts` — ensures `~/.sibyl` and `~/.sibyl/plugins` exist, and loads/creates/validates `~/.sibyl/config.json` (all on every invocation).
 - `src/plugin-loader.ts` — assembles the active plugin set: builtin plugins + external (on-disk) plugins; validates the external ones.
 - `src/plugins/config.ts` — `getBuiltinPlugins()`, the in-repo builtin plugin registry.
-- `src/utils.ts` — pure helpers (`isValidHttpUrl`).
+- `src/utils.ts` — pure helpers: `isValidHttpUrl`, `stripSearchResultDatePrefix` (strips localized SERP date prefixes), `collapseBlankLines`, and the search-setting readers `getSearchResultsLimit` / `shouldShowSearchDescription` (see Conventions).
 - `src/exit.ts` — `exit()`, the single wrapper around `process.exit` (see Conventions).
 - `src/@types/` — `plugin.ts` (plugin contract) and `sibyl-config.ts` (config shape).
+
+User-facing docs live in `docs/` — `CONFIGURATION.md` (config + per-plugin env-var tables), `CREATING-PLUGINS.md`, and `CONTRIBUTION.md` (linked from `README.md`).
 
 ### Plugin system (the core concept)
 
@@ -43,11 +45,13 @@ Plugins live in `~/.sibyl/plugins/<name>/main.js` (note: `.js`, loaded at runtim
 
 1. `name: string` — non-empty, identifies the plugin.
 2. `type: "search" | "fetch" | "ask" | "parse"`.
-3. `fn` — the function implementing the plugin's logic. Its signature depends on `type` (`src/@types/plugin.ts`):
-   - `search`: `(query) => Promise<string>`
-   - `fetch`: `(url) => Promise<string>`
-   - `ask`: `(parsedContent, query) => Promise<string>`
-   - `parse`: `(html) => Promise<string>`
+3. `fn` — the function implementing the plugin's logic. Every `fn` receives a `PluginContext` as its **last** argument; its signature otherwise depends on `type` (`src/@types/plugin.ts`):
+   - `search`: `(query, context) => Promise<string>`
+   - `fetch`: `(url, context) => Promise<string>`
+   - `ask`: `(parsedContent, query, context) => Promise<string>`
+   - `parse`: `(html, context) => Promise<string>`
+
+`PluginContext` (`src/@types/plugin.ts`) lets a plugin reach the rest of the plugin system: `{ configuredPlugins: Partial<Record<PluginType, PluginTypeDeclaration>>, allPlugins: PluginTypeDeclaration[], getPlugin(name): PluginTypeDeclaration | null }`. `configuredPlugins` is keyed by type (the per-type selection from config), `allPlugins` is everything loaded, and `getPlugin` looks up by name. It's built once in `cli.ts` and threaded to every `fn`; plugins consume it only if needed (a 1-arg `fn` still satisfies the contract via structural typing). This is how a fetch plugin runs the configured parser: `context.configuredPlugins.parse?.fn(html, context)`.
 
 Key detail: `fn` is a **field of `SilbylPlugin`**, so the loader validates and parses a single export. The external `SilbylPlugin` is structurally identical to the internal `PluginTypeDeclaration` `{ name, type, fn }`.
 
@@ -69,7 +73,7 @@ When changing the plugin shape, update all three together: `src/@types/plugin.ts
 
 Shape: `SibylConfig` (`src/@types/sibyl-config.ts`) — `{ plugins: Partial<Record<PluginType, string>>, variables: { name, value }[] }`. `plugins` maps `type` → plugin name (e.g. `{ "search": "builtin-exa-search" }`); keying by type structurally enforces at most one plugin per type. `variables` is a list of `{ name, value }` pairs injected into `process.env`.
 
-- `loadOrCreateConfigFile()` (`setup.ts`) writes a default config (`writeDefaultSibylConfig`) when the file is missing or empty, then parses, validates, and injects variables.
+- `loadOrCreateConfigFile()` (`setup.ts`) writes a default config (`writeDefaultSibylConfig`) when the file is missing or empty, then parses, validates, and injects variables. The default selects `builtin-searxng-search` / `builtin-crawl4ai-fetch` / `builtin-parse-htmlToMd` with no `variables` (fully local, no-API-key backends).
 - `injectConfigVariables()` (`setup.ts`) sets `process.env[name] = value` for each config variable. **Config wins over the environment** — a variable named in config overrides any existing env var; names absent from config fall back to their existing env value. (Plugins like `builtin-exa-search` read `process.env.EXA_API_KEY` at call time, so they pick up either source.)
 - `validateConfig()` checks each entry's name is a non-empty string; on failure it `console.error`s and `process.exit(1)` (hard exit, not a skip-with-warning like plugin loading).
 - Plugin selection: `loadPlugins()` loads _all_ available plugins (builtins + disk), then `cli.ts` picks the one to run **by name from config** — e.g. the `search` command looks up `config.plugins.search` and finds the loaded plugin whose `type === "search"` and `name` matches. Missing config entry or no matching loaded plugin → `console.error` + non-zero exit.
@@ -80,3 +84,4 @@ Shape: `SibylConfig` (`src/@types/sibyl-config.ts`) — `{ plugins: Partial<Reco
 - TypeScript is strict, plus `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` — index access can be `undefined` and optional props can't be assigned `undefined` explicitly.
 - `allowImportingTsExtensions` + `rewriteRelativeImportExtensions` are on, so source uses explicit extensions on relative imports and `tsc` rewrites them on build. Existing imports are inconsistent — some `.ts`, one `.js` (`./loader.js`); match the file you're editing.
 - File header comment block on each module: `Author: Jamius Siam` / `Since: <date>`.
+- Search plugins read two shared settings via `src/utils.ts` helpers — `getSearchResultsLimit()` (`SIBYL_SEARCH_RESULTS_LIMIT`, default `10`; passed to the provider's API when it supports a result-count param, and the results array is always `.slice(0, limit)`d) and `shouldShowSearchDescription()` (`SIBYL_SHOW_SEARCH_DESCRIPTION`, default `true`). New search builtins should use both.

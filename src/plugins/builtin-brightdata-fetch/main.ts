@@ -2,9 +2,11 @@
  * Author: Jamius Siam
  * Since: 06/06/2026
  */
-import type { FetchPlugin } from "../../@types/plugin.ts";
+import type { FetchPlugin, ParsePlugin, PluginContext } from "../../@types/plugin.ts";
 
-async function fetchFn(url: string) {
+const REQUEST_TIMEOUT_MS = 10_000;
+
+async function fetchFn(url: string, context: PluginContext): Promise<string> {
   const apiKey = process.env.BRIGHTDATA_API_KEY;
   if (!apiKey) {
     throw new Error("Missing `BRIGHTDATA_API_KEY` environment variable.");
@@ -26,6 +28,7 @@ async function fetchFn(url: string) {
       url,
       format: "raw",
     }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {
@@ -34,8 +37,15 @@ async function fetchFn(url: string) {
     );
   }
 
-  // `format: "raw"` returns the page body verbatim (HTML), not a JSON envelope.
-  return await res.text();
+  const html = await res.text();
+
+  const parsePlugin = context.configuredPlugins.parse as ParsePlugin;
+
+  if (!parsePlugin) {
+    return html;
+  }
+
+  return parsePlugin.fn(html, context);
 }
 
 export const SilbylPlugin: FetchPlugin = {

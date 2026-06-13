@@ -4,8 +4,11 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SilbylPlugin } from "./main.ts";
+import type { PluginContext } from "../../@types/plugin.ts";
 
 const fetchFn = SilbylPlugin.fn;
+
+const context: PluginContext = { configuredPlugins: {}, allPlugins: [], getPlugin: () => null };
 
 function makeResponse({
   ok = true,
@@ -45,10 +48,21 @@ afterEach(() => {
 });
 
 describe("builtin-exa-fetch", () => {
+  it("an AbortSignal is present on the fetch", async () => {
+    const fetchMock = stubFetch(makeResponse({ json: { results: [] } }));
+
+    await fetchFn("https://a.com", context);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
   it("throws when `EXA_API_KEY` is missing", async () => {
     delete process.env.EXA_API_KEY;
 
-    await expect(fetchFn("https://a.com")).rejects.toThrow(
+    await expect(fetchFn("https://a.com", context)).rejects.toThrow(
       "Missing `EXA_API_KEY` environment variable.",
     );
   });
@@ -62,19 +76,21 @@ describe("builtin-exa-fetch", () => {
       }),
     );
 
-    await expect(fetchFn("https://a.com")).resolves.toEqual("alpha\n\n");
+    await expect(fetchFn("https://a.com", context)).resolves.toEqual("alpha\n\n");
   });
 
   it("returns a no-content message when `results` is empty", async () => {
     stubFetch(makeResponse({ json: { results: [] } }));
 
-    await expect(fetchFn("https://a.com")).resolves.toEqual("No content for: https://a.com");
+    await expect(fetchFn("https://a.com", context)).resolves.toEqual(
+      "No content for: https://a.com",
+    );
   });
 
   it("throws when the response is not ok", async () => {
     stubFetch(makeResponse({ ok: false, status: 404, statusText: "Not Found", text: "missing" }));
 
-    await expect(fetchFn("https://a.com")).rejects.toThrow(
+    await expect(fetchFn("https://a.com", context)).rejects.toThrow(
       "Exa fetch failed: 404 Not Found - missing",
     );
   });

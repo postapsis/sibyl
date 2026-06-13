@@ -54,16 +54,11 @@ export function writeDefaultSibylConfig(): void {
 
   const sibylConfig: SibylConfig = {
     plugins: {
-      search: "builtin-exa-search",
-      fetch: "builtin-exa-fetch",
+      search: "builtin-searxng-search",
+      fetch: "builtin-crawl4ai-fetch",
       parse: "builtin-parse-htmlToMd",
     },
-    variables: [
-      {
-        name: "SIBYL_SHOW_SEARCH_DESCRIPTION",
-        value: "true",
-      },
-    ],
+    variables: [],
   };
 
   fs.writeFileSync(configFile, JSON.stringify(sibylConfig, null, 2));

@@ -3,6 +3,11 @@
  * Since: 06/06/2026
  */
 import type { SearchPlugin } from "../../@types/plugin.ts";
+import {
+  getSearchResultsLimit,
+  shouldShowSearchDescription,
+  stripSearchResultDatePrefix,
+} from "../../utils.ts";
 
 interface BrightDataOrganicResult {
   title: string;
@@ -17,6 +22,8 @@ interface BrightDataSerpResult {
 
 const PATTERN_READ_MORE = /\.\.\.\s*read more$/i;
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 async function searchFn(query: string) {
   const apiKey = process.env.BRIGHTDATA_API_KEY;
   if (!apiKey) {
@@ -27,7 +34,8 @@ async function searchFn(query: string) {
   if (!zone) {
     throw new Error("Missing `BRIGHTDATA_SERP_API_ZONE` environment variable.");
   }
-  const showDescription = process.env.SIBYL_SHOW_SEARCH_DESCRIPTION === "true";
+  const showDescription = shouldShowSearchDescription();
+  const limit = getSearchResultsLimit();
 
   const language = process.env.BRIGHTDATA_SERP_API_LANGUAGE ?? "en";
   const country = process.env.BRIGHTDATA_SERP_API_COUNTRY ?? "";
@@ -50,6 +58,7 @@ async function searchFn(query: string) {
       format: "raw",
       data_format: "parsed_light",
     }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {
@@ -65,11 +74,15 @@ async function searchFn(query: string) {
   }
 
   return organicResults.organic
+    .slice(0, limit)
     .map((r) => {
       const title = r.title ?? "(untitled)";
       let description = r.description;
 
       if (showDescription && description) {
+        // We strip the leading localized date prefix
+        description = stripSearchResultDatePrefix(description);
+
         // We strip the ending "Read more" text here if it's present
         if (PATTERN_READ_MORE.test(description)) {
           description = description.replace(PATTERN_READ_MORE, "").concat("...");

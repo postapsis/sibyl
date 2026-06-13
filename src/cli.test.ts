@@ -32,7 +32,7 @@ import type {
 import type { SibylConfig } from "./@types/sibyl-config.ts";
 
 const contextMatcher = expect.objectContaining({
-  configuredPlugins: expect.any(Array),
+  configuredPlugins: expect.any(Object),
   allPlugins: expect.any(Array),
   getPlugin: expect.any(Function),
 });
@@ -173,7 +173,7 @@ describe("handleSearch", () => {
 
     expect(context).not.toBeNull();
     expect(context.allPlugins).toBe(plugins);
-    expect(context.configuredPlugins).toEqual([plugins[0], plugins[1]]);
+    expect(context.configuredPlugins).toEqual({ search: plugins[0], fetch: plugins[1] });
     expect(context.getPlugin("test-search")).toBe(plugins[0]);
     expect(context.getPlugin("test-fetch")).toBe(plugins[1]);
     expect(context.getPlugin("nope")).toBeNull();

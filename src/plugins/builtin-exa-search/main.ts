@@ -3,6 +3,7 @@
  * Since: 06/06/2026
  */
 import type { SearchPlugin } from "../../@types/plugin.ts";
+import { getSearchResultsLimit, shouldShowSearchDescription } from "../../utils.ts";
 
 interface ExaResult {
   title: string | null;
@@ -14,13 +15,16 @@ interface ExaResponse {
   results: ExaResult[];
 }
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 async function searchFn(query: string) {
   const apiKey = process.env.EXA_API_KEY;
   if (!apiKey) {
     throw new Error("Missing `EXA_API_KEY` environment variable.");
   }
 
-  const showDescription = process.env.SIBYL_SHOW_SEARCH_DESCRIPTION === "true";
+  const showDescription = shouldShowSearchDescription();
+  const limit = getSearchResultsLimit();
 
   const res = await fetch("https://api.exa.ai/search", {
     method: "POST",
@@ -30,11 +34,13 @@ async function searchFn(query: string) {
     },
     body: JSON.stringify({
       query,
+      numResults: limit,
       type: "auto",
       contents: {
         highlights: showDescription,
       },
     }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {
@@ -48,6 +54,7 @@ async function searchFn(query: string) {
   }
 
   return data.results
+    .slice(0, limit)
     .map((r) => {
       const title = r.title ?? "(untitled)";
       const highlights = r.highlights;
