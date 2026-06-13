@@ -8,6 +8,7 @@ import { SilbylPlugin as exaFetch } from "./builtin-exa-fetch/main.ts";
 import { SilbylPlugin as brightDataSearch } from "./builtin-brightdata-search/main.ts";
 import { SilbylPlugin as brightDataFetch } from "./builtin-brightdata-fetch/main.ts";
 import { SilbylPlugin as crawl4aiFetch } from "./builtin-crawl4ai-fetch/main.ts";
+import { SilbylPlugin as alterlabFetch } from "./builtin-alterlab-fetch/main.ts";
 import { SilbylPlugin as parseHtmlToMd } from "./builtin-parse-htmlToMd/main.ts";
 import { SilbylPlugin as searxngSearch } from "./builtin-searxng-search/main.ts";
 
@@ -18,6 +19,7 @@ export function getBuiltinPlugins(): PluginTypeDeclaration[] {
     brightDataSearch,
     brightDataFetch,
     crawl4aiFetch,
+    alterlabFetch,
     parseHtmlToMd,
     searxngSearch,
   ];
