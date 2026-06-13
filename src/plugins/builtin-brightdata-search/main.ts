@@ -22,6 +22,8 @@ interface BrightDataSerpResult {
 
 const PATTERN_READ_MORE = /\.\.\.\s*read more$/i;
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 async function searchFn(query: string) {
   const apiKey = process.env.BRIGHTDATA_API_KEY;
   if (!apiKey) {
@@ -56,6 +58,7 @@ async function searchFn(query: string) {
       format: "raw",
       data_format: "parsed_light",
     }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {

@@ -80,7 +80,7 @@ export const SilbylPlugin = {
 
 #### Example: An ask plugin
 
-`~/.sibyl/plugins/my-llm-ask-plugib/main.js`
+`~/.sibyl/plugins/my-llm-ask-plugin/main.js`
 
 ```js
 async function askFn(parsedContent, query) {

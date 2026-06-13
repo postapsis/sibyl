@@ -63,6 +63,17 @@ afterEach(() => {
 });
 
 describe("builtin-searxng-search", () => {
+  it("an AbortSignal is present on the fetch", async () => {
+    const fetchMock = stubFetch(makeResponse({ json: { results: [] } }));
+
+    await searchFn("react vite", context);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
   it("queries the default url with `format=json` and no `engines` when unset", async () => {
     const fetchMock = stubFetch(makeResponse({ json: { results: [] } }));
 

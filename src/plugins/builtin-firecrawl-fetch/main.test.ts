@@ -65,6 +65,19 @@ afterEach(() => {
 });
 
 describe("builtin-firecrawl-fetch", () => {
+  it("an AbortSignal is present on the fetch", async () => {
+    const fetchMock = stubFetch(
+      makeResponse({ json: { success: true, data: { markdown: "x", rawHtml: "" } } }),
+    );
+
+    await fetchFn(url, context);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
   it("throws when `FIRECRAWL_API_KEY` is missing", async () => {
     delete process.env.FIRECRAWL_API_KEY;
 

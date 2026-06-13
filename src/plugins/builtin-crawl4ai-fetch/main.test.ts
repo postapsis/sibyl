@@ -73,6 +73,17 @@ afterEach(() => {
 });
 
 describe("builtin-crawl4ai-fetch", () => {
+  it("an AbortSignal is present on the fetch", async () => {
+    const fetchMock = stubFetch(makeResponse({ json: { success: true, results: [] } }));
+
+    await fetchFn(url, context);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
   it("throws when the response is not ok", async () => {
     stubFetch(makeResponse({ ok: false, status: 500, statusText: "Internal Server Error" }));
 
@@ -92,7 +103,7 @@ describe("builtin-crawl4ai-fetch", () => {
     stubFetch(makeResponse({ json: { success: false } }));
 
     await expect(fetchFn(url, context)).rejects.toThrow(
-      "Crawl4AI fetch failed: Craw4AI success response false",
+      "Crawl4AI fetch failed: Crawl4AI success response false",
     );
   });
 

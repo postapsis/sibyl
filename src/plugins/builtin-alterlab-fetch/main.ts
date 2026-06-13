@@ -14,6 +14,8 @@ interface AlterLabScrapeResponse {
   content?: Result;
 }
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 async function fetchFn(url: string, context: PluginContext): Promise<string> {
   const apiKey = process.env.ALTERLAB_API_KEY;
   if (!apiKey) {
@@ -27,6 +29,7 @@ async function fetchFn(url: string, context: PluginContext): Promise<string> {
       "X-API-Key": apiKey,
     },
     body: JSON.stringify({ url, force_refresh: true, sync: true }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {

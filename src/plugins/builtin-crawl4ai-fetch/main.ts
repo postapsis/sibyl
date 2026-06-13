@@ -11,10 +11,12 @@ interface Result {
   status_code: number;
 }
 
-interface Craw4AiResult {
+interface Crawl4AiResult {
   success: boolean;
   results?: Result[];
 }
+
+const REQUEST_TIMEOUT_MS = 10_000;
 
 async function fetchFn(url: string, context: PluginContext): Promise<string> {
   const crawl4AiUrl = process.env.SIBYL_CRAWL4AI_URL ?? "http://localhost:11235";
@@ -44,6 +46,7 @@ async function fetchFn(url: string, context: PluginContext): Promise<string> {
           wait_until: "networkidle",
         },
       }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch (err) {
     console.warn(
@@ -62,10 +65,10 @@ You can run it with:
     throw new Error(`Crawl4AI fetch failed: ${res.status} ${res.statusText}`);
   }
 
-  const body = (await res.json()) as Craw4AiResult;
+  const body = (await res.json()) as Crawl4AiResult;
 
   if (!body.success) {
-    throw new Error("Crawl4AI fetch failed: Craw4AI success response false");
+    throw new Error("Crawl4AI fetch failed: Crawl4AI success response false");
   }
 
   if (!body.results || body.results?.length === 0) {

@@ -54,6 +54,17 @@ afterEach(() => {
 });
 
 describe("builtin-brightdata-fetch", () => {
+  it("an AbortSignal is present on the fetch", async () => {
+    const fetchMock = stubFetch(makeResponse({ text: "<html></html>" }));
+
+    await fetchFn("https://a.com", context);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
   it("throws when `BRIGHTDATA_API_KEY` is missing", async () => {
     delete process.env.BRIGHTDATA_API_KEY;
 

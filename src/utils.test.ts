@@ -107,6 +107,7 @@ describe("getSearchResultsLimit", () => {
     ["5", 5],
     ["25", 25],
     ["1", 1],
+    ["2.5", 10],
   ])("returns the parsed limit for %j", (value, expected) => {
     process.env.SIBYL_SEARCH_RESULTS_LIMIT = value;
     expect(getSearchResultsLimit()).toBe(expected);

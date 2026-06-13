@@ -50,6 +50,17 @@ afterEach(() => {
 });
 
 describe("builtin-alterlab-search", () => {
+  it("an AbortSignal is present on the fetch", async () => {
+    const fetchMock = stubFetch(makeResponse({ json: { query: "react vite", results: [] } }));
+
+    await searchFn("react vite", context);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
   it("throws when `ALTERLAB_API_KEY` is missing", async () => {
     delete process.env.ALTERLAB_API_KEY;
 

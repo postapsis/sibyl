@@ -19,6 +19,8 @@ interface FirecrawlSearchResponse {
   id: string;
 }
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 async function searchFn(query: string) {
   const apiKey = process.env.FIRECRAWL_API_KEY;
   if (!apiKey) {
@@ -35,6 +37,7 @@ async function searchFn(query: string) {
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({ query, limit }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {

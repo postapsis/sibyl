@@ -21,6 +21,8 @@ interface SearXngResult {
   results: Result[];
 }
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 async function searchFn(query: string) {
   const searxngUrl = process.env.SIBYL_SEARXNG_URL ?? "http://localhost:8080";
   const showDescription = shouldShowSearchDescription();
@@ -35,7 +37,9 @@ async function searchFn(query: string) {
   let res: Response;
 
   try {
-    res = await fetch(`${searxngUrl}/search?${params.toString()}`);
+    res = await fetch(`${searxngUrl}/search?${params.toString()}`, {
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
   } catch (err) {
     console.warn(
       `Is SearXNG reachable on ${searxngUrl}?\nGitHub: https://github.com/searxng/searxng`,

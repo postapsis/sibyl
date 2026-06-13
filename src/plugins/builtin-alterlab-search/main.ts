@@ -21,6 +21,8 @@ interface AlterLabSearchResponse {
   results: AlterLabResult[];
 }
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 async function searchFn(query: string) {
   const apiKey = process.env.ALTERLAB_API_KEY;
   if (!apiKey) {
@@ -37,6 +39,7 @@ async function searchFn(query: string) {
       "X-API-Key": apiKey,
     },
     body: JSON.stringify({ query, num_results: limit }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {

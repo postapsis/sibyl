@@ -18,8 +18,7 @@ Sibyl reads its config from `~/.sibyl/config.json`, created with sensible defaul
 #### `plugins` section
 
 Maps each plugin type (`search` / `fetch` / `ask` / `parse`) to the **name** of the plugin to use for it. Exactly one
-plugin per type. The value must match a plugin's `name` (a builtin like `builtin-exa-search`, or one of your custom
-written one!).
+plugin per type. The value must match a plugin's `name` (a builtin like `builtin-exa-search`, or one of your custom-written plugins).
 
 #### `variables` section
 
@@ -85,10 +84,10 @@ Requires a Crawl4AI server, e.g., via Docker. See more at [https://hub.docker.co
 
 #### `builtin-firecrawl-fetch` — `fetch`
 
-| Variable                         | Required | Default | Description                                                                                                                                                             |
-| -------------------------------- | -------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `FIRECRAWL_API_KEY`              | Yes      | —       | Firecrawl API key (includes the `fc-` prefix).                                                                                                                          |
-| `SIBYL_FIRECRAWL_FETCH_USE_HTML` | No       | `false` | When `"true"`, fetches the raw HTML and runs it through the configured `parse` plugin; otherwise returns the markdown from Firecrwawl with extra blank lines collapsed. |
+| Variable                         | Required | Default | Description                                                                                                                                                            |
+| -------------------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FIRECRAWL_API_KEY`              | Yes      | —       | Firecrawl API key (includes the `fc-` prefix).                                                                                                                         |
+| `SIBYL_FIRECRAWL_FETCH_USE_HTML` | No       | `false` | When `"true"`, fetches the raw HTML and runs it through the configured `parse` plugin; otherwise returns the markdown from Firecrawl with extra blank lines collapsed. |
 
 #### `builtin-alterlab-search` — `search`
 

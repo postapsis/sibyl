@@ -15,6 +15,8 @@ interface ExaResponse {
   results: ExaResult[];
 }
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 async function searchFn(query: string) {
   const apiKey = process.env.EXA_API_KEY;
   if (!apiKey) {
@@ -38,6 +40,7 @@ async function searchFn(query: string) {
         highlights: showDescription,
       },
     }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {

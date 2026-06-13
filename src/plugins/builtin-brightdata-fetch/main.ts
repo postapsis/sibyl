@@ -4,6 +4,8 @@
  */
 import type { FetchPlugin, ParsePlugin, PluginContext } from "../../@types/plugin.ts";
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 async function fetchFn(url: string, context: PluginContext) {
   const apiKey = process.env.BRIGHTDATA_API_KEY;
   if (!apiKey) {
@@ -26,6 +28,7 @@ async function fetchFn(url: string, context: PluginContext) {
       url,
       format: "raw",
     }),
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
   });
 
   if (!res.ok) {

@@ -26,11 +26,17 @@ export function collapseBlankLines(markdown: string): string {
 }
 
 // Maximum number of results a search plugin should return. Read from
-// `SIBYL_SEARCH_RESULTS_LIMIT`, falling back to 10 when unset or invalid (non-numeric or <= 0).
+// `SIBYL_SEARCH_RESULTS_LIMIT`, falling back to 10 when unset or
+// invalid (non-numeric, floating point or <= 0).
 export function getSearchResultsLimit(): number {
   const raw = process.env.SIBYL_SEARCH_RESULTS_LIMIT;
-  const parsed = raw ? Number.parseInt(raw, 10) : NaN;
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : 10;
+  const normalized = raw?.trim();
+  if (!normalized || !/^\d+$/.test(normalized)) {
+    return 10;
+  }
+
+  const parsed = Number.parseInt(normalized, 10);
+  return parsed > 0 ? parsed : 10;
 }
 
 // Whether search plugins should include result descriptions. Defaults to true when
