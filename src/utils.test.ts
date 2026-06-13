@@ -3,7 +3,7 @@
  * Since: 10/06/2026
  */
 import { describe, expect, it } from "vitest";
-import { isValidHttpUrl, stripSearchResultDatePrefix } from "./utils.ts";
+import { collapseBlankLines, isValidHttpUrl, stripSearchResultDatePrefix } from "./utils.ts";
 
 describe("isValidHttpUrl", () => {
   it.each([
@@ -52,5 +52,28 @@ describe("stripSearchResultDatePrefix", () => {
     "",
   ])("leaves %j unchanged when there is no leading date prefix", (input) => {
     expect(stripSearchResultDatePrefix(input)).toBe(input);
+  });
+});
+
+describe("collapseBlankLines", () => {
+  it.each([
+    ["a\n\nb", "a\nb"],
+    ["a\n\n\n\nb", "a\nb"],
+    ["# Title\n\n\n\nsome text", "# Title\nsome text"],
+    ["line1\n\nline2\n\n\nline3", "line1\nline2\nline3"],
+    ["\n\nhello\n\n", "hello"],
+    ["  hello  ", "hello"],
+    ["\n\n# Title\n\ntext\n\n\n", "# Title\ntext"],
+  ])("collapses consecutive newlines and trims %j", (input, expected) => {
+    expect(collapseBlankLines(input)).toBe(expected);
+  });
+
+  it.each([
+    ["a\nb", "a\nb"],
+    ["a\nb\nc", "a\nb\nc"],
+    ["single line", "single line"],
+    ["", ""],
+  ])("leaves %j unchanged", (input, expected) => {
+    expect(collapseBlankLines(input)).toBe(expected);
   });
 });

@@ -20,3 +20,7 @@ const DATE_PREFIX_PATTERN = /^(?=[^·•\n]*\p{Nd})[^·•\n]{1,40}?\s+[·•]\s
 export function stripSearchResultDatePrefix(text: string): string {
   return text.replace(DATE_PREFIX_PATTERN, "");
 }
+
+export function collapseBlankLines(markdown: string): string {
+  return markdown.replace(/\n{2,}/g, "\n").trim();
+}

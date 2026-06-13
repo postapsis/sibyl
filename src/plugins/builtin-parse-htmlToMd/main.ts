@@ -7,6 +7,7 @@ import * as cheerio from "cheerio";
 import { parseHTML } from "linkedom";
 import { Defuddle } from "defuddle/node";
 import TurndownService from "turndown";
+import { collapseBlankLines } from "../../utils.ts";
 
 // Tags removed entirely (including their contents) before extraction.
 const REMOVE_TAGS = [
@@ -71,10 +72,7 @@ async function parseHtmlFn(html: string): Promise<string> {
   }
 
   // Convert to markdown, then collapse 2+ consecutive blank lines into one.
-  return turndownService
-    .turndown(contentHtml)
-    .replace(/\n{2,}/g, "\n")
-    .trim();
+  return collapseBlankLines(turndownService.turndown(contentHtml));
 }
 
 export const SilbylPlugin: ParsePlugin = {
