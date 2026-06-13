@@ -6,7 +6,7 @@ import type { FetchPlugin, ParsePlugin, PluginContext } from "../../@types/plugi
 
 const REQUEST_TIMEOUT_MS = 10_000;
 
-async function fetchFn(url: string, context: PluginContext) {
+async function fetchFn(url: string, context: PluginContext): Promise<string> {
   const apiKey = process.env.BRIGHTDATA_API_KEY;
   if (!apiKey) {
     throw new Error("Missing `BRIGHTDATA_API_KEY` environment variable.");

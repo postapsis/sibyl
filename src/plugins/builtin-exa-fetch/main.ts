@@ -16,7 +16,7 @@ interface ExaContentsResponse {
 
 const REQUEST_TIMEOUT_MS = 10_000;
 
-async function fetchFn(url: string) {
+async function fetchFn(url: string): Promise<string> {
   const apiKey = process.env.EXA_API_KEY;
   if (!apiKey) {
     throw new Error("Missing `EXA_API_KEY` environment variable.");
