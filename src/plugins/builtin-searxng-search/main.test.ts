@@ -120,13 +120,14 @@ describe("builtin-searxng-search", () => {
           results: [
             { title: "First", url: "https://a.com", content: "ignored", engine: "google" },
             { title: "Second", url: "https://b.com", content: "ignored", engine: "google" },
+            { title: null, url: "https://c.com", content: "ignored", engine: "google" },
           ],
         },
       }),
     );
 
     await expect(searchFn("react vite", context)).resolves.toEqual(
-      "First\nhttps://a.com\n\nSecond\nhttps://b.com",
+      "First\nhttps://a.com\n\nSecond\nhttps://b.com\n\n(untitled)\nhttps://c.com",
     );
   });
 

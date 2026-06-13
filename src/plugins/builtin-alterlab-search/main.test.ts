@@ -88,13 +88,14 @@ describe("builtin-alterlab-search", () => {
           results: [
             { url: "https://a.com", title: "First", snippet: "ignored", position: 1 },
             { url: "https://b.com", title: "Second", snippet: "ignored", position: 2 },
+            { url: "https://c.com", title: null, snippet: "ignored", position: 3 },
           ],
         },
       }),
     );
 
     await expect(searchFn("react vite", context)).resolves.toEqual(
-      "First\nhttps://a.com\n\nSecond\nhttps://b.com",
+      "First\nhttps://a.com\n\nSecond\nhttps://b.com\n\n(untitled)\nhttps://c.com",
     );
   });
 

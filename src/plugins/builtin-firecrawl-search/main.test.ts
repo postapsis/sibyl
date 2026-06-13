@@ -91,6 +91,7 @@ describe("builtin-firecrawl-search", () => {
             web: [
               { url: "https://a.com", title: "First", description: "ignored", position: 1 },
               { url: "https://b.com", title: "Second", description: "ignored", position: 2 },
+              { url: "https://c.com", title: null, description: "ignored", position: 3 },
             ],
           },
           creditsUsed: 1,
@@ -100,7 +101,7 @@ describe("builtin-firecrawl-search", () => {
     );
 
     await expect(searchFn("web scraping python", context)).resolves.toEqual(
-      "First\nhttps://a.com\n\nSecond\nhttps://b.com",
+      "First\nhttps://a.com\n\nSecond\nhttps://b.com\n\n(untitled)\nhttps://c.com",
     );
   });
 
