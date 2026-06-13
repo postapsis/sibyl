@@ -16,7 +16,7 @@ pnpm build
 pnpm start run
 ```
 
-The entrypoint for `sibyl` is located in `src/cli.ts`.\
+The entrypoint for Sibyl is located in `src/cli.ts`.\
 The plugin loading mechanism is located in `src/plugin-loader.ts`.
 
 ### Scripts

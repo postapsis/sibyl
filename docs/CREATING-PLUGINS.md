@@ -2,7 +2,7 @@
 
 ### File structure
 
-Plugins are loaded at runtime from your home config directory. `sibyl` creates these directories on first run:
+Plugins are loaded at runtime from your home config directory. Sibyl creates these directories on first run:
 
 ```
 ~/.sibyl/
@@ -114,7 +114,7 @@ export const SilbylPlugin = {
 
 ### Plugin Validation
 
-When `sibyl` is run, each plugin is validated. A plugin is **skipped with a warning** if:
+When Sibyl is run, each plugin is validated. A plugin is **skipped with a warning** if:
 
 - The folder has no `main.js`,
 - `SilbylPlugin` is missing or not an object,

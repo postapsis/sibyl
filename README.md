@@ -8,7 +8,7 @@
 
 ---
 
-**_sibyl_** gives your AI Agent the web, without the bloat — extensible and lightweight by design 🕷️
+**_Sibyl_** gives your AI Agent the web, without the bloat — extensible and lightweight by design 🕷️
 
 ---
 
@@ -18,12 +18,12 @@
 
 ## Quickstart
 
-**_sibyl_** uses **SearXNG** for web search and **Crawl4AI** for webpage fetching by default. Both run
+Sibyl uses **SearXNG** for web search and **Crawl4AI** for webpage fetching by default. Both run
 locally with no API key. Lots of other options are available (e.g., **Exa**, **Firecrawl**, **Brightdata**, etc.). Check the [Configuration](#configuration) section for more details.
 
 Get a working setup in a few steps:
 
-1. Install **_sibyl_** globally via NPM:
+1. Install **Sibyl** globally via NPM:
 
    ```bash
    # ⚠️ Not yet available on npm

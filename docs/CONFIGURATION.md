@@ -2,7 +2,7 @@
 
 ### Configuration file
 
-`sibyl` reads its config from `~/.sibyl/config.json`, created with sensible defaults on first run. It has two sections:
+Sibyl reads its config from `~/.sibyl/config.json`, created with sensible defaults on first run. It has two sections:
 
 ```json
 {
@@ -37,7 +37,7 @@ above). A **required** variable causes the plugin to error if it is unset.
 
 All `search` plugins also honor the following environment variables
 
-1. **`SIBYL_SEARCH_RESULTS_LIMIT`** (default `10`): `sibyl` passes it to the search
+1. **`SIBYL_SEARCH_RESULTS_LIMIT`** (default `10`): Sibyl passes it to the search
    provider's API when the provider supports a result-count parameter, and always slices the returned results down to this
    limit.
 2. **`SIBYL_SHOW_SEARCH_DESCRIPTION`** (default `true`): When `"true"`, includes result snippet/description in the output.
@@ -46,7 +46,7 @@ All `search` plugins also honor the following environment variables
 
 | Variable                        | Required | Default                 | Description                                                                                                      |
 | ------------------------------- | -------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `SIBYL_SEARXNG_URL`             | No       | `http://localhost:8080` | Base URL of a running SearXNG instance; `sibyl` GETs `/search` with `format=json`.                               |
+| `SIBYL_SEARXNG_URL`             | No       | `http://localhost:8080` | Base URL of a running SearXNG instance. Sibyl uses `/search` endpoint with `format=json`.                        |
 | `SIBYL_SEARXNG_ENGINES`         | No       | _(none)_                | Comma-separated SearXNG engines to query (e.g. `google`); omitted when unset.                                    |
 | `SIBYL_SHOW_SEARCH_DESCRIPTION` | No       | `true`                  | When `"true"`, includes result content in the output.                                                            |
 | `SIBYL_SEARCH_RESULTS_LIMIT`    | No       | `10`                    | Maximum number of search results to return; passed to the provider when supported and always applied by slicing. |
@@ -55,9 +55,9 @@ Requires a SearXNG instance with the **JSON output format enabled**. See more at
 
 #### `builtin-crawl4ai-fetch` — `fetch`
 
-| Variable             | Required | Default                  | Description                                                                        |
-| -------------------- | -------- | ------------------------ | ---------------------------------------------------------------------------------- |
-| `SIBYL_CRAWL4AI_URL` | No       | `http://localhost:11235` | Base URL of a running Crawl4AI server; `sibyl` POSTs to `/crawl` to fetch the data |
+| Variable             | Required | Default                  | Description                                                                               |
+| -------------------- | -------- | ------------------------ | ----------------------------------------------------------------------------------------- |
+| `SIBYL_CRAWL4AI_URL` | No       | `http://localhost:11235` | Base URL of a running Crawl4AI server. Sibyl uses the `/crawl` endpoint to fetch the data |
 
 Requires a Crawl4AI server, e.g., via Docker. See more at [https://hub.docker.com/r/unclecode/crawl4ai](https://hub.docker.com/r/unclecode/crawl4ai)
 
