@@ -55,4 +55,23 @@ describe("builtin-parse-htmlToMd", () => {
   it("returns an empty string when there is no content", async () => {
     await expect(SilbylPlugin.fn("   ", context)).resolves.toBe("");
   });
+
+  it("strips attributes outside the allowlist while keeping a link's href", async () => {
+    const html = `<article>
+      <h1>Getting Started with Vite</h1>
+      <p>Vite is a fast build tool for modern web projects. It supports React, Vue,
+      and Svelte out of the box and ships with a dev server.</p>
+      <p>Read the <a href="/guide" class="cta" title="tooltip text">official guide</a>
+      for full setup instructions and configuration details.</p>
+    </article>`;
+
+    const md = await SilbylPlugin.fn(html, context);
+
+    // The allowed `href` survives; the disallowed `title`/`class` are stripped,
+    // so Turndown emits a bare link with no title syntax.
+    expect(md).toContain("official guide");
+    expect(md).toContain("/guide");
+    expect(md).not.toContain("tooltip text");
+    expect(md).not.toContain("cta");
+  });
 });
