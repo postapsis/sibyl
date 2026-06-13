@@ -7,16 +7,11 @@
 ```json
 {
   "plugins": {
-    "search": "builtin-exa-search",
-    "fetch": "builtin-exa-fetch",
+    "search": "builtin-searxng-search",
+    "fetch": "builtin-crawl4ai-fetch",
     "parse": "builtin-parse-htmlToMd"
   },
-  "variables": [
-    {
-      "name": "EXA_API_KEY",
-      "value": "your-api-key"
-    }
-  ]
+  "variables": []
 }
 ```
 

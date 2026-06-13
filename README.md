@@ -8,13 +8,68 @@
 
 ---
 
-`sibyl` gives your AI Agent the web, without the bloat — extensible and lightweight by design 🕷️
+**_sibyl_** gives your AI Agent the web, without the bloat — extensible and lightweight by design 🕷️
 
 ---
 
 ## Status
 
-Currently in development.
+⚠️ Currently in development.
+
+## Quickstart
+
+**_sibyl_** ships with **SearXNG** (search) and **Crawl4AI** (fetch) as its default backends — both run
+locally with no API key. Get a working setup in a few steps:
+
+1. Install **_sibyl_** globally via NPM:
+
+   ```bash
+   # ⚠️ Not yet available on npm
+   npm i -g sibyl
+   ```
+
+2. Run a local [SearXNG](https://github.com/searxng/searxng) instance for searching the web:
+
+   ```bash
+   # Create and enter a working directory for the SearXNG local instance
+   mkdir ~/searxng
+   cd ~/searxng
+
+   # Download SearXNG's default settings
+   curl -o settings.yml https://raw.githubusercontent.com/searxng/searxng/master/searx/settings.yml
+
+   # Enable the JSON output format and replace the placeholder secret key
+   sed -i -e 's/    - html$/    - html\n    - json/' \
+          -e "s/secret_key: \"ultrasecretkey\"/secret_key: \"$(openssl rand -hex 32)\"/" \
+          searxng/settings.yml
+
+   # Start SearXNG on http://localhost:8080 with the updated settings
+   docker run -d \
+     --restart unless-stopped \
+     -p 8080:8080 \
+     -v ./settings.yml:/etc/searxng/settings.yml \
+     --name searxng \
+     searxng/searxng:latest
+   ```
+
+3. Run a local [Crawl4AI](https://github.com/unclecode/crawl4ai) instance for fetching webpages:
+
+   ```bash
+   docker run -d \
+     --restart unless-stopped \
+     -p 11235:11235 \
+     --shm-size=3g \
+     --name crawl4ai \
+     unclecode/crawl4ai:latest
+   ```
+
+4. Run your first search:
+
+   ```bash
+   sibyl search "how to use react with vite"
+   ```
+
+5. Configure your settings! **_sibyl_** uses SearXNG and Crawl4AI by default to search and fetch webpages, but lots of other options are available (e.g., Exa, Brightdata, Firecrawl etc.). See more in the [Configuration](#configuration) section for more details.
 
 ## Commands
 
@@ -28,12 +83,12 @@ Currently in development.
 
 ## Configuration
 
-See the configuration doc for more details at [docs/CONFIGURATION.md](https://github.com/postapsis/sibyl/blob/main/docs/CONFIGURATION.md)
+See the configuration documentation for more details at [docs/CONFIGURATION.md](https://github.com/postapsis/sibyl/blob/main/docs/CONFIGURATION.md)
 
 ## Create a Plugin
 
-See the plugin development doc for more details at [docs/CREATING-PLUGINS.md](https://github.com/postapsis/sibyl/blob/main/docs/CREATING-PLUGINS.md)
+See the plugin development documentation for more details at [docs/CREATING-PLUGINS.md](https://github.com/postapsis/sibyl/blob/main/docs/CREATING-PLUGINS.md)
 
 ## Contribution
 
-See the contribution doc for more details at [docs/CONTRIBUTION.md](https://github.com/postapsis/sibyl/blob/main/docs/CONTRIBUTION.md)
+See the contribution documentation for more details at [docs/CONTRIBUTION.md](https://github.com/postapsis/sibyl/blob/main/docs/CONTRIBUTION.md)

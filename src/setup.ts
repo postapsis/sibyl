@@ -54,8 +54,8 @@ export function writeDefaultSibylConfig(): void {
 
   const sibylConfig: SibylConfig = {
     plugins: {
-      search: "builtin-exa-search",
-      fetch: "builtin-exa-fetch",
+      search: "builtin-searxng-search",
+      fetch: "builtin-crawl4ai-fetch",
       parse: "builtin-parse-htmlToMd",
     },
     variables: [],
