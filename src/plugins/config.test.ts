@@ -19,6 +19,7 @@ describe("getBuiltinPlugins", () => {
       ["builtin-parse-htmlToMd", "parse"],
       ["builtin-searxng-search", "search"],
       ["builtin-alterlab-search", "search"],
+      ["builtin-firecrawl-search", "search"],
     ]);
 
     for (const plugin of plugins) {

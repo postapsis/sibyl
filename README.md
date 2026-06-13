@@ -99,6 +99,13 @@ Requires a Crawl4AI server, e.g., via Docker. See more at [https://hub.docker.co
 | ------------- | -------- | ------- | ------------ |
 | `EXA_API_KEY` | Yes      | —       | Exa API key. |
 
+#### `builtin-firecrawl-search` — `search`
+
+| Variable                        | Required | Default | Description                                                |
+| ------------------------------- | -------- | ------- | ---------------------------------------------------------- |
+| `FIRECRAWL_API_KEY`             | Yes      | —       | Firecrawl API key (includes the `fc-` prefix).             |
+| `SIBYL_SHOW_SEARCH_DESCRIPTION` | No       | `true`  | When `"true"`, includes result descriptions in the output. |
+
 #### `builtin-alterlab-search` — `search`
 
 | Variable                        | Required | Default | Description                                            |
