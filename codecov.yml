@@ -8,3 +8,7 @@ coverage:
       default:
         target: 90%
         threshold: 2%
+
+comment:
+  behavior: default
+  require_changes: true
