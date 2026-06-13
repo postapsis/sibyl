@@ -99,6 +99,13 @@ Requires a Crawl4AI server, e.g., via Docker. See more at [https://hub.docker.co
 | ------------- | -------- | ------- | ------------ |
 | `EXA_API_KEY` | Yes      | —       | Exa API key. |
 
+#### `builtin-alterlab-search` — `search`
+
+| Variable                        | Required | Default | Description                                            |
+| ------------------------------- | -------- | ------- | ------------------------------------------------------ |
+| `ALTERLAB_API_KEY`              | Yes      | —       | AlterLab API key.                                      |
+| `SIBYL_SHOW_SEARCH_DESCRIPTION` | No       | `true`  | When `"true"`, includes result snippets in the output. |
+
 #### `builtin-alterlab-fetch` — `fetch`
 
 | Variable           | Required | Default | Description       |

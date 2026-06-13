@@ -18,6 +18,7 @@ describe("getBuiltinPlugins", () => {
       ["builtin-alterlab-fetch", "fetch"],
       ["builtin-parse-htmlToMd", "parse"],
       ["builtin-searxng-search", "search"],
+      ["builtin-alterlab-search", "search"],
     ]);
 
     for (const plugin of plugins) {
