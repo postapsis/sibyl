@@ -17,6 +17,7 @@ import { loadPlugins } from "./plugin-loader.ts";
 import { isValidHttpUrl } from "./utils.ts";
 import { exit } from "./exit.ts";
 import { pathToFileURL } from "node:url";
+import { realpathSync } from "node:fs";
 import * as process from "node:process";
 
 export async function main(argv: string[]): Promise<void> {
@@ -169,8 +170,11 @@ Examples:
 `);
 }
 
+// `process.argv[1]` is the path as invoked (a symlink when installed globally),
+// whereas `import.meta.url` is the realpath of this module. Resolve the symlink
+// so the entry check holds for global installs, not just direct `node` runs.
 const entry = process.argv[1];
-const isCli = entry !== undefined && import.meta.url === pathToFileURL(entry).href;
+const isCli = entry !== undefined && import.meta.url === pathToFileURL(realpathSync(entry)).href;
 
 if (isCli) {
   void main(process.argv.slice(2));
