@@ -11,7 +11,12 @@ Sibyl reads its config from `~/.sibyl/config.json`, created with sensible defaul
     "fetch": "builtin-crawl4ai-fetch",
     "parse": "builtin-parse-htmlToMd"
   },
-  "variables": []
+  "variables": [
+    {
+      "name": "SIBYL_SHOW_SEARCH_DESCRIPTION",
+      "value": "true"
+    }
+  ]
 }
 ```
 
