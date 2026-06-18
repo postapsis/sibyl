@@ -8,7 +8,7 @@
 
 ---
 
-**_Sibyl_** gives your AI Agent the web, without the bloat — extensible and lightweight by design 🕷️
+**Sibyl** gives your AI Agent the web, without the bloat - extensible and lightweight by design 🕷️
 
 ---
 
