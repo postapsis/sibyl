@@ -216,7 +216,7 @@ Commands:
   version               Show version
 
 Examples:
-  sibyl search "react vite bootstrap"
+  sibyl search "react vite"
   sibyl fetch https://vite.dev/guide
   sibyl ask https://vite.dev/guide "how do I start a react project with vite?"
 `);
