@@ -21,6 +21,7 @@ describe("getBuiltinPlugins", () => {
       ["builtin-alterlab-search", "search"],
       ["builtin-firecrawl-search", "search"],
       ["builtin-firecrawl-fetch", "fetch"],
+      ["builtin-ai-ask", "ask"],
     ]);
 
     for (const plugin of plugins) {

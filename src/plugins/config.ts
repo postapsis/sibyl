@@ -14,6 +14,7 @@ import { SilbylPlugin as firecrawlSearch } from "./builtin-firecrawl-search/main
 import { SilbylPlugin as firecrawlFetch } from "./builtin-firecrawl-fetch/main.ts";
 import { SilbylPlugin as parseHtmlToMd } from "./builtin-parse-htmlToMd/main.ts";
 import { SilbylPlugin as searxngSearch } from "./builtin-searxng-search/main.ts";
+import { SilbylPlugin as aiAsk } from "./builtin-ai-ask/main.ts";
 
 export function getBuiltinPlugins(): PluginTypeDeclaration[] {
   return [
@@ -28,5 +29,6 @@ export function getBuiltinPlugins(): PluginTypeDeclaration[] {
     alterlabSearch,
     firecrawlSearch,
     firecrawlFetch,
+    aiAsk,
   ];
 }

@@ -6,6 +6,7 @@
  */
 import { loadOrCreateConfigDir, loadOrCreateConfigFile, loadOrCreatePluginsDir } from "./setup.ts";
 import type {
+  AskPlugin,
   FetchPlugin,
   PluginContext,
   PluginType,
@@ -62,6 +63,23 @@ export async function main(argv: string[]): Promise<void> {
       }
 
       await handleFetch(plugins, config, url, context);
+      break;
+    }
+    case "ask": {
+      const url = rest[0]?.trim();
+      const query = rest.slice(1).join(" ").trim();
+
+      if (!url || !query) {
+        console.error('Usage: sibyl ask <url> "<question>"');
+        exit(1);
+      }
+
+      if (!isValidHttpUrl(url)) {
+        console.error(`Invalid URL: ${url}`);
+        exit(1);
+      }
+
+      await handleAsk(plugins, config, url, query, context);
       break;
     }
     case "--version":
@@ -152,6 +170,38 @@ async function handleFetch(
   }
 }
 
+async function handleAsk(
+  plugins: PluginTypeDeclaration[],
+  config: SibylConfig,
+  url: string,
+  query: string,
+  context: PluginContext,
+): Promise<void> {
+  const askPluginName = config.plugins.ask;
+
+  if (!askPluginName) {
+    console.error("No ask plugin configured in `~/.sibyl/config.json`");
+    exit(1);
+  }
+
+  const askPlugin = plugins.find(
+    (plugin) => plugin.type === "ask" && plugin.name === askPluginName,
+  ) as AskPlugin;
+
+  if (!askPlugin) {
+    console.error(`Configured ask plugin \`${askPluginName}\` not found`);
+    exit(1);
+  }
+
+  try {
+    const result = await askPlugin.fn(url, query, context);
+    console.log(result);
+  } catch (error) {
+    console.error(`Error asking using ${askPlugin.name}: ${error}`);
+    exit(1);
+  }
+}
+
 function printHelp(): void {
   console.log(`sibyl - CLI tool
 
@@ -159,14 +209,16 @@ Usage:
   sibyl <command> [options]
 
 Commands:
-  search <query>   Search the web
-  fetch <url>      Fetch the content of a URL
-  help             Show this help
-  version          Show version
+  search <query>        Search the web
+  fetch <url>           Fetch the content of a URL
+  ask <url> <question>  Answer a question using a URL's content via an LLM
+  help                  Show this help
+  version               Show version
 
 Examples:
   sibyl search "react vite bootstrap"
   sibyl fetch https://vite.dev/guide
+  sibyl ask https://vite.dev/guide "how do I start a react project with vite?"
 `);
 }
 

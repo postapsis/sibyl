@@ -121,6 +121,19 @@ Requires a Crawl4AI server, e.g., via Docker. See more at [https://hub.docker.co
 | `BRIGHTDATA_API_KEY`               | Yes      | —       | Bright Data API key.               |
 | `BRIGHTDATA_WEB_UNLOCKER_API_ZONE` | Yes      | —       | Bright Data Web Unlocker API zone. |
 
+#### `builtin-ai-ask` — `ask`
+
+Reads a URL through the configured `fetch` plugin, then asks an LLM the question against that content. A working `fetch` plugin must also be configured (`plugins.fetch`).
+
+| Variable             | Required    | Default                      | Description                                                                                  |
+| -------------------- | ----------- | ---------------------------- | -------------------------------------------------------------------------------------------- |
+| `SIBYL_AI_PROVIDER`  | Yes         | —                            | LLM provider: one of `openai`, `anthropic`, `ollama`, `openrouter`.                          |
+| `SIBYL_MODEL_NAME`   | Yes         | —                            | Model id passed to the provider (e.g. `gpt-6`, `claude-sonnet-4-6`, `llama3.1`).             |
+| `OPENAI_API_KEY`     | Conditional | —                            | Required when `SIBYL_AI_PROVIDER=openai`.                                                    |
+| `ANTHROPIC_API_KEY`  | Conditional | —                            | Required when `SIBYL_AI_PROVIDER=anthropic`.                                                 |
+| `OPENROUTER_API_KEY` | Conditional | —                            | Required when `SIBYL_AI_PROVIDER=openrouter`.                                                |
+| `OLLAMA_BASE_URL`    | No          | `http://localhost:11433/api` | Base URL of a running Ollama server; used only when `SIBYL_AI_PROVIDER=ollama` (no API key). |
+
 #### `builtin-parse-htmlToMd` — `parse`
 
 No environment variables.

@@ -61,9 +61,14 @@
     "vitest": "^4.1.8"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.85",
+    "@ai-sdk/openai": "^3.0.72",
+    "@openrouter/ai-sdk-provider": "^2.9.1",
+    "ai": "^6.0.207",
     "cheerio": "^1.2.0",
     "defuddle": "^0.18.1",
     "linkedom": "^0.18.12",
+    "ollama-ai-provider-v2": "^3.6.0",
     "turndown": "^7.2.4"
   }
 }
