@@ -137,7 +137,7 @@ Reads a URL through the configured `fetch` plugin, then asks an LLM the question
 | `OPENAI_API_KEY`     | Conditional | —                            | Required when `SIBYL_AI_PROVIDER=openai`.                                                    |
 | `ANTHROPIC_API_KEY`  | Conditional | —                            | Required when `SIBYL_AI_PROVIDER=anthropic`.                                                 |
 | `OPENROUTER_API_KEY` | Conditional | —                            | Required when `SIBYL_AI_PROVIDER=openrouter`.                                                |
-| `OLLAMA_BASE_URL`    | No          | `http://localhost:11433/api` | Base URL of a running Ollama server; used only when `SIBYL_AI_PROVIDER=ollama` (no API key). |
+| `OLLAMA_BASE_URL`    | No          | `http://localhost:11434/api` | Base URL of a running Ollama server; used only when `SIBYL_AI_PROVIDER=ollama` (no API key). |
 
 #### `builtin-parse-htmlToMd` — `parse`
 
