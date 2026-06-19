@@ -1,9 +1,3 @@
----
-title: "Configuration"
-order: 1
-slug: "configuration"
----
-
 # Configuration
 
 ## Configuration file
