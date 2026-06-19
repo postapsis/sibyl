@@ -24,6 +24,7 @@ import { loadOrCreateConfigFile } from "./setup.ts";
 import { loadPlugins } from "./plugin-loader.ts";
 import { exit } from "./exit.ts";
 import type {
+  AskPlugin,
   FetchPlugin,
   PluginContext,
   PluginTypeDeclaration,
@@ -39,6 +40,7 @@ const contextMatcher = expect.objectContaining({
 
 let searchFn: Mock;
 let fetchFn: Mock;
+let askFn: Mock;
 let plugins: PluginTypeDeclaration[];
 let config: SibylConfig;
 
@@ -48,13 +50,15 @@ beforeEach(() => {
 
   searchFn = vi.fn(async () => "search result");
   fetchFn = vi.fn(async () => "fetch result");
+  askFn = vi.fn(async () => "ask result");
 
   const searchPlugin: SearchPlugin = { name: "test-search", type: "search", fn: searchFn };
   const fetchPlugin: FetchPlugin = { name: "test-fetch", type: "fetch", fn: fetchFn };
-  plugins = [searchPlugin, fetchPlugin];
+  const askPlugin: AskPlugin = { name: "test-ask", type: "ask", fn: askFn };
+  plugins = [searchPlugin, fetchPlugin, askPlugin];
 
   config = {
-    plugins: { search: "test-search", fetch: "test-fetch" },
+    plugins: { search: "test-search", fetch: "test-fetch", ask: "test-ask" },
     variables: [],
   };
 
@@ -123,6 +127,32 @@ describe("dispatch & argument validation", () => {
     expect(console.log).toHaveBeenCalledWith("fetch result");
   });
 
+  it.each([
+    { argv: ["ask"], label: "no url" },
+    { argv: ["ask", "https://vite.dev"], label: "url but no question" },
+    { argv: ["ask", "https://vite.dev", "   "], label: "whitespace-only question" },
+  ])("errors when ask is missing url or question ($label)", async ({ argv }) => {
+    await expect(main(argv)).rejects.toThrow("process.exit");
+
+    expect(console.error).toHaveBeenCalledWith('Usage: sibyl ask <url> "<question>"');
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it("errors when ask url is invalid", async () => {
+    await expect(main(["ask", "not-a-url", "some question"])).rejects.toThrow("process.exit");
+
+    expect(console.error).toHaveBeenCalledWith("Invalid URL: not-a-url");
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(askFn).not.toHaveBeenCalled();
+  });
+
+  it("joins and trims the question before passing it to the ask plugin", async () => {
+    await main(["ask", "https://vite.dev", "how", "to", "start"]);
+
+    expect(askFn).toHaveBeenCalledWith("https://vite.dev", "how to start", contextMatcher);
+    expect(console.log).toHaveBeenCalledWith("ask result");
+  });
+
   it("errors and prints help on an unknown command", async () => {
     await expect(main(["bogus"])).rejects.toThrow("process.exit");
 
@@ -173,9 +203,14 @@ describe("handleSearch", () => {
 
     expect(context).not.toBeNull();
     expect(context.allPlugins).toBe(plugins);
-    expect(context.configuredPlugins).toEqual({ search: plugins[0], fetch: plugins[1] });
+    expect(context.configuredPlugins).toEqual({
+      search: plugins[0],
+      fetch: plugins[1],
+      ask: plugins[2],
+    });
     expect(context.getPlugin("test-search")).toBe(plugins[0]);
     expect(context.getPlugin("test-fetch")).toBe(plugins[1]);
+    expect(context.getPlugin("test-ask")).toBe(plugins[2]);
     expect(context.getPlugin("nope")).toBeNull();
   });
 
@@ -232,6 +267,50 @@ describe("handleFetch", () => {
 
     expect(console.error).toHaveBeenCalledWith(
       expect.stringContaining("Error fetching using test-fetch:"),
+    );
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+});
+
+describe("handleAsk", () => {
+  it("errors when no ask plugin is configured", async () => {
+    vi.mocked(loadOrCreateConfigFile).mockReturnValue({ plugins: {}, variables: [] });
+
+    await expect(main(["ask", "https://vite.dev", "q"])).rejects.toThrow("process.exit");
+
+    expect(console.error).toHaveBeenCalledWith(
+      "No ask plugin configured in `~/.sibyl/config.json`",
+    );
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it("errors when the configured ask plugin is not loaded", async () => {
+    vi.mocked(loadOrCreateConfigFile).mockReturnValue({
+      plugins: { ask: "missing-plugin" },
+      variables: [],
+    });
+
+    await expect(main(["ask", "https://vite.dev", "q"])).rejects.toThrow("process.exit");
+
+    expect(console.error).toHaveBeenCalledWith("Configured ask plugin `missing-plugin` not found");
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it("logs the plugin result on success", async () => {
+    await main(["ask", "https://vite.dev", "q"]);
+
+    expect(askFn).toHaveBeenCalledWith("https://vite.dev", "q", contextMatcher);
+    expect(console.log).toHaveBeenCalledWith("ask result");
+    expect(exit).not.toHaveBeenCalled();
+  });
+
+  it("errors when the plugin rejects", async () => {
+    askFn.mockRejectedValue(new Error("boom"));
+
+    await expect(main(["ask", "https://vite.dev", "q"])).rejects.toThrow("process.exit");
+
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining("Error asking using test-ask:"),
     );
     expect(exit).toHaveBeenCalledWith(1);
   });
