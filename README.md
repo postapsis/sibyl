@@ -4,11 +4,11 @@
 [![sibyl License Page](https://img.shields.io/badge/license-Apache_2.0-brightgreen)](https://raw.githubusercontent.com/postapsis/sibyl/refs/heads/main/LICENSE)
 [![sibyl CI Status](https://github.com/postapsis/sibyl/actions/workflows/ci.yaml/badge.svg)](https://github.com/postapsis/sibyl/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/postapsis/sibyl/branch/main/graph/badge.svg?token=NOTP4DPWO4)](https://codecov.io/gh/postapsis/sibyl)
-<br/>
 
 ---
 
-**Sibyl** gives your AI Agent the web, without the bloat - extensible and lightweight by design 🕷️
+Local-first web search and exploration for your AI agents, without the bloat.\
+Extensible and lightweight by design 🕷️
 
 ---
 
