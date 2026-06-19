@@ -16,7 +16,7 @@ const askFn = SilbylPlugin.fn;
 const mockedGenerateText = vi.mocked(generateText);
 
 function resolveAnswer(text: string): void {
-  // @ts-ignore Complicated type, ignoring for now
+  // @ts-expect-error Complicated type in mocked return, ignoring for now.
   mockedGenerateText.mockResolvedValue({ text });
 }
 

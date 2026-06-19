@@ -9,7 +9,8 @@ Sibyl reads its config from `~/.sibyl/config.json`, created with sensible defaul
   "plugins": {
     "search": "builtin-searxng-search",
     "fetch": "builtin-crawl4ai-fetch",
-    "parse": "builtin-parse-htmlToMd"
+    "parse": "builtin-parse-htmlToMd",
+    "ask": "builtin-ai-ask"
   },
   "variables": [
     {

@@ -3,7 +3,6 @@
  * Since: 18/06/2026
  */
 import type { AskPlugin, FetchPlugin, PluginContext } from "../../@types/plugin.ts";
-import type { LanguageModelV3 } from "@openrouter/ai-sdk-provider";
 
 const REQUEST_TIMEOUT_MS = 30_000;
 
@@ -28,7 +27,7 @@ function requireEnv(name: string): string {
   return value;
 }
 
-async function buildModel(provider: AiProvider, modelName: string): Promise<LanguageModelV3> {
+async function buildModel(provider: AiProvider, modelName: string) {
   switch (provider) {
     case "openai": {
       const apiKey = requireEnv("OPENAI_API_KEY");
