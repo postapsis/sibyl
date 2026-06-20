@@ -4,11 +4,11 @@
 [![sibyl License Page](https://img.shields.io/badge/license-Apache_2.0-brightgreen)](https://raw.githubusercontent.com/postapsis/sibyl/refs/heads/main/LICENSE)
 [![sibyl CI Status](https://github.com/postapsis/sibyl/actions/workflows/ci.yaml/badge.svg)](https://github.com/postapsis/sibyl/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/postapsis/sibyl/branch/main/graph/badge.svg?token=NOTP4DPWO4)](https://codecov.io/gh/postapsis/sibyl)
-<br/>
 
 ---
 
-**_Sibyl_** gives your AI Agent the web, without the bloat — extensible and lightweight by design 🕷️
+Local-first web search and exploration for your AI agents, without the bloat.\
+Extensible and lightweight by design 🕷️
 
 ---
 
@@ -76,13 +76,13 @@ Get a working setup in a few steps:
 
 ## Commands
 
-| Command        | Description                                                                                                                   |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `search`       | Searches the web <br/>`sibyl search "react vite boostrap"`                                                                    |
-| `fetch`        | Gets the content of a site in token-efficient markdown <br/>`sibyl fetch https://vite.dev/guide`                              |
-| `ask`          | Asks a query using LLM from a site's content <br/>`sibyl ask https://vite.dev/guide "how to start a react project with vite"` |
-| `--help`, `-h` | Show help.                                                                                                                    |
-| `--version`    | Show version.                                                                                                                 |
+| Command              | Description                                                                                                                   |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| search <query>       | Searches the web <br/>`sibyl search "react vite"`                                                                             |
+| fetch <url>          | Prints the content of a site in token-efficient markdown <br/>`sibyl fetch https://vite.dev/guide`                            |
+| ask <url> <question> | Asks a query using LLM from a site's content <br/>`sibyl ask https://vite.dev/guide "how to start a react project with vite"` |
+| `--help`, `-h`       | Shows help.                                                                                                                   |
+| `--version`          | Shows version.                                                                                                                |
 
 ## Configuration
 

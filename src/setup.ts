@@ -57,8 +57,14 @@ export function writeDefaultSibylConfig(): void {
       search: "builtin-searxng-search",
       fetch: "builtin-crawl4ai-fetch",
       parse: "builtin-parse-htmlToMd",
+      ask: "builtin-ai-ask",
     },
-    variables: [],
+    variables: [
+      {
+        name: "SIBYL_SHOW_SEARCH_DESCRIPTION",
+        value: "true",
+      },
+    ],
   };
 
   fs.writeFileSync(configFile, JSON.stringify(sibylConfig, null, 2));

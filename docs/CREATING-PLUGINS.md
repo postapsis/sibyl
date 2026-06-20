@@ -37,7 +37,7 @@ plugin system:
 | Field               | Description                                                                                                                                  |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `configuredPlugins` | The plugin selected for each type in your config, keyed by type — e.g. `context.configuredPlugins.parse`. Only configured types are present. |
-| `allPlugins`        | An array of every loaded plugin (builtins + your custom ones).                                                                               |
+| `allPlugins`        | An array of every loaded plugin (built-ins + your custom ones).                                                                              |
 | `getPlugin(name)`   | Returns the loaded plugin whose `name` matches, or `null` if none does.                                                                      |
 
 Each entry is a `{ name, type, fn }` object, so one plugin can invoke another — e.g. a `fetch` plugin can run the
