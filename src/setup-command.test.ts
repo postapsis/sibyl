@@ -18,7 +18,7 @@ import {
   SIBYL_BLOCK_END,
   SIBYL_BLOCK_NOTICE,
   SIBYL_BLOCK_START,
-  SIBYL_INSTRUCTIONS,
+  buildSibylInstructions,
 } from "./instructions.ts";
 
 let home: string;
@@ -66,7 +66,7 @@ describe("claude target", () => {
   it("writes SIBYL.md and the @SIBYL.md import, leaving other tools untouched", () => {
     runSetup(["--claude"]);
 
-    expect(read(".claude", "SIBYL.md").trimEnd()).toBe(SIBYL_INSTRUCTIONS);
+    expect(read(".claude", "SIBYL.md").trimEnd()).toBe(buildSibylInstructions("Claude Haiku"));
     expect(read(".claude", "CLAUDE.md")).toContain("@SIBYL.md");
 
     expect(fs.existsSync(path.join(home, ".config", "opencode"))).toBe(false);
@@ -163,5 +163,37 @@ describe("embed targets", () => {
     expect(content).toContain("Collect all the necessary information");
     expect(content.split(SIBYL_BLOCK_START)).toHaveLength(2); // marker appears exactly once
     expect(content.split(SIBYL_BLOCK_NOTICE)).toHaveLength(2);
+  });
+});
+
+describe("subagent model per target", () => {
+  it("names Claude's cheap model (Claude Haiku) in the claude doc", () => {
+    runSetup(["--claude"]);
+    expect(read(".claude", "SIBYL.md")).toContain("subagents (with Claude Haiku)");
+  });
+
+  it("uses the generic phrasing for opencode (model-agnostic)", () => {
+    runSetup(["--opencode"]);
+    expect(read(".config", "opencode", "SIBYL.md")).toContain("subagents (with a cheap model)");
+  });
+
+  it("names GPT-5 Mini for codex and drops the Claude-specific Haiku", () => {
+    runSetup(["--codex"]);
+
+    const content = read(".codex", "AGENTS.md");
+    expect(content).toContain("subagents (with GPT-5 Mini)");
+    expect(content).not.toContain("Haiku");
+  });
+
+  it("names Gemini Flash for antigravity", () => {
+    runSetup(["--antigravity"]);
+    expect(read(".gemini", "GEMINI.md")).toContain("subagents (with Gemini Flash)");
+  });
+
+  it("uses the generic phrasing for --other targets", () => {
+    const target = path.join(home, "notes.md");
+
+    runSetup(["--other", target]);
+    expect(fs.readFileSync(target, "utf8")).toContain("subagents (with a cheap model)");
   });
 });
