@@ -12,10 +12,21 @@ import {
   SIBYL_BLOCK_START,
   SIBYL_DOC_FILENAME,
   SIBYL_IMPORT_LINE,
-  SIBYL_INSTRUCTIONS,
+  buildSibylInstructions,
 } from "./instructions.ts";
 
 type SetupTarget = "claude" | "opencode" | "codex" | "antigravity";
+
+// Cheap/fast model each target's agent should spawn subagents with, interpolated into the
+// instructions doc so every tool references a model it can actually run. opencode is
+// provider-agnostic (no canonical cheap model), so it falls back to the generic phrasing.
+const GENERIC_SUBAGENT_MODEL = "a cheap model";
+const SUBAGENT_MODEL: Record<SetupTarget, string> = {
+  claude: "Claude Haiku",
+  opencode: GENERIC_SUBAGENT_MODEL,
+  codex: "GPT-5 Mini",
+  antigravity: "Gemini Flash",
+};
 
 // Path opencode stores in its `instructions[]` array. Kept in tilde form (opencode expands
 // `~`) so it stays portable, while the doc itself is written to the expanded path.
@@ -37,25 +48,25 @@ export function runSetup(args: string[]): void {
     const home = os.homedir();
 
     if (targets.has("claude")) {
-      writeDoc(path.join(home, ".claude", SIBYL_DOC_FILENAME));
+      writeDoc(path.join(home, ".claude", SIBYL_DOC_FILENAME), SUBAGENT_MODEL.claude);
       addImportLine(path.join(home, ".claude", "CLAUDE.md"));
     }
 
     if (targets.has("opencode")) {
-      writeDoc(path.join(home, ".config", "opencode", SIBYL_DOC_FILENAME));
+      writeDoc(path.join(home, ".config", "opencode", SIBYL_DOC_FILENAME), SUBAGENT_MODEL.opencode);
       addOpencodeInstruction(path.join(home, ".config", "opencode", "opencode.json"));
     }
 
     if (targets.has("codex")) {
-      embedBlock(path.join(home, ".codex", "AGENTS.md"));
+      embedBlock(path.join(home, ".codex", "AGENTS.md"), SUBAGENT_MODEL.codex);
     }
 
     if (targets.has("antigravity")) {
-      embedBlock(path.join(home, ".gemini", "GEMINI.md"));
+      embedBlock(path.join(home, ".gemini", "GEMINI.md"), SUBAGENT_MODEL.antigravity);
     }
 
     for (const other of otherPaths) {
-      embedBlock(path.resolve(other));
+      embedBlock(path.resolve(other), GENERIC_SUBAGENT_MODEL);
     }
   } catch (error) {
     console.error(`Error running setup: ${error}`);
@@ -113,9 +124,9 @@ function usageError(message: string): never {
 }
 
 // Writes the standalone SIBYL.md doc, overwriting any existing copy (refresh in place).
-function writeDoc(file: string): void {
+function writeDoc(file: string, subagentModel: string): void {
   ensureDir(file);
-  fs.writeFileSync(file, `${SIBYL_INSTRUCTIONS}\n`);
+  fs.writeFileSync(file, `${buildSibylInstructions(subagentModel)}\n`);
   console.log(`Wrote instructions doc: ${file}`);
 }
 
@@ -159,11 +170,11 @@ function addOpencodeInstruction(jsonPath: string): void {
 
 // Embeds the instructions inside sentinel markers followed by a do-not-edit notice. On
 // re-run the existing block (and its trailing notice) is replaced in place, not duplicated.
-function embedBlock(file: string): void {
+function embedBlock(file: string, subagentModel: string): void {
   ensureDir(file);
   const current = readIfExists(file);
 
-  const block = `${SIBYL_BLOCK_START}\n${SIBYL_INSTRUCTIONS}\n${SIBYL_BLOCK_END}\n${SIBYL_BLOCK_NOTICE}`;
+  const block = `${SIBYL_BLOCK_START}\n${buildSibylInstructions(subagentModel)}\n${SIBYL_BLOCK_END}\n${SIBYL_BLOCK_NOTICE}`;
   const blockRe = new RegExp(
     `${escapeRegExp(SIBYL_BLOCK_START)}[\\s\\S]*?${escapeRegExp(SIBYL_BLOCK_END)}` +
       `(?:\\n${escapeRegExp(SIBYL_BLOCK_NOTICE)})?`,
