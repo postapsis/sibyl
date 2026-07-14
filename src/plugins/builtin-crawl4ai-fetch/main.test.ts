@@ -61,6 +61,9 @@ beforeEach(() => {
   parseFn.mockClear();
   envSnapshot = { ...process.env };
   delete process.env.SIBYL_CRAWL4AI_URL;
+  delete process.env.SIBYL_CRAWL4AI_PROXY_SERVER;
+  delete process.env.SIBYL_CRAWL4AI_PROXY_USERNAME;
+  delete process.env.SIBYL_CRAWL4AI_PROXY_PASSWORD;
 });
 
 afterEach(() => {
@@ -193,5 +196,48 @@ describe("builtin-crawl4ai-fetch", () => {
       "http://crawler:9999/crawl",
       expect.objectContaining({ method: "POST" }),
     );
+  });
+
+  it("omits `proxy_config` when `SIBYL_CRAWL4AI_PROXY_SERVER` is unset", async () => {
+    const fetchMock = stubFetch(makeResponse({ json: { success: true, results: [] } }));
+
+    await fetchFn(url, context);
+
+    const mockCallArgs = fetchMock.mock.calls[0] as RequestInit[];
+    const req = mockCallArgs[1];
+    expect(req?.body).not.toContain("proxy_config");
+  });
+
+  it("includes `proxy_config` with server, username and password when all are set", async () => {
+    process.env.SIBYL_CRAWL4AI_PROXY_SERVER = "https://proxy.example.com:823";
+    process.env.SIBYL_CRAWL4AI_PROXY_USERNAME = "user";
+    process.env.SIBYL_CRAWL4AI_PROXY_PASSWORD = "pass";
+    const fetchMock = stubFetch(makeResponse({ json: { success: true, results: [] } }));
+
+    await fetchFn(url, context);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        body: expect.stringContaining(
+          '"proxy_config":{"server":"https://proxy.example.com:823","username":"user","password":"pass"}',
+        ),
+      }),
+    );
+  });
+
+  it("includes `proxy_config` with only server when username and password are unset", async () => {
+    process.env.SIBYL_CRAWL4AI_PROXY_SERVER = "https://proxy.example.com:823";
+    const fetchMock = stubFetch(makeResponse({ json: { success: true, results: [] } }));
+
+    await fetchFn(url, context);
+
+    const mockCallArgs = fetchMock.mock.calls[0] as RequestInit[];
+    const req = mockCallArgs[1];
+    const body = req?.body;
+
+    expect(body).toContain('"proxy_config":{"server":"https://proxy.example.com:823"}');
+    expect(body).not.toContain("username");
+    expect(body).not.toContain("password");
   });
 });
