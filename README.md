@@ -26,8 +26,7 @@ Get a working setup in a few steps:
 1. Install **Sibyl** globally via NPM:
 
    ```bash
-   # ⚠️ Not yet available on npm
-   npm i -g sibyl
+   npm i -g @postapsis/sibyl
    ```
 
 2. Run a local [SearXNG](https://github.com/searxng/searxng) instance for searching the web:
@@ -65,25 +64,35 @@ Get a working setup in a few steps:
      unclecode/crawl4ai:latest
    ```
 
-4. Run your first search:
+4. Set up your agent to use Sibyl:
+
+   ```bash
+   sibyl setup --claude
+   sibyl setup --codex
+   sibyl setup --opencode
+   sibyl setup --antigravity
+   sibyl setup --other ~/path/to/AGENTS.md
+   ```
+
+5. Run your first search:
 
    ```bash
    sibyl search "how to use react with vite"
    ```
 
-5. Configure your settings!\
+6. Configure your settings!\
    Check the [Configuration](#configuration) section for more details.
 
 ## Commands
 
-| Command              | Description                                                                                                                                                                                                                                               |
-| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| search <query>       | Searches the web <br/>`sibyl search "react vite"`                                                                                                                                                                                                         |
-| fetch <url>          | Prints the content of a site in token-efficient markdown <br/>`sibyl fetch https://vite.dev/guide`                                                                                                                                                        |
-| ask <url> <question> | Asks a query using LLM from a site's content <br/>`sibyl ask https://vite.dev/guide "how to start a react project with vite"`                                                                                                                             |
-| setup <targets>      | Installs the `SIBYL.md` instructions doc into an agent's global instruction files <br/>`sibyl setup --claude --opencode --codex --antigravity` <br/>Targets: `--claude`, `--opencode`, `--codex`, `--antigravity`, `--other <file>` (embed into any file) |
-| `--help`, `-h`       | Shows help.                                                                                                                                                                                                                                               |
-| `--version`          | Shows version.                                                                                                                                                                                                                                            |
+| Command              | Description                                                                                                                                                                                                                                                                 |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| search <query>       | Searches the web <br/>`sibyl search "react vite"`                                                                                                                                                                                                                           |
+| fetch <url>          | Prints the content of a site in token-efficient markdown <br/>`sibyl fetch https://vite.dev/guide`                                                                                                                                                                          |
+| ask <url> <question> | Asks a query using LLM from a site's content <br/>`sibyl ask https://vite.dev/guide "how to start a react project with vite"`                                                                                                                                               |
+| setup <targets>      | Installs the `SIBYL.md` instructions doc into an agent's global instruction files <br/><br/>`sibyl setup --claude --opencode --codex --antigravity` <br/>Targets: `--claude`, `--opencode`, `--codex`, `--antigravity`, `--other ~/path/to/AGENTS.md` (embed into any file) |
+| `--help`, `-h`       | Shows help.                                                                                                                                                                                                                                                                 |
+| `--version`          | Shows version.                                                                                                                                                                                                                                                              |
 
 ## Configuration
 
