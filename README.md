@@ -12,10 +12,6 @@ Extensible and lightweight by design 🕷️
 
 ---
 
-## Status
-
-⚠️ Currently in development.
-
 ## Quickstart
 
 Sibyl uses **SearXNG** for web search and **Crawl4AI** for webpage fetching by default. Both run
