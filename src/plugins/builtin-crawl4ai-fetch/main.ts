@@ -22,6 +22,8 @@ async function fetchFn(url: string, context: PluginContext): Promise<string> {
   const crawl4AiUrl = process.env.SIBYL_CRAWL4AI_URL ?? "http://localhost:11235";
   const crawl4AiCrawlApiUrl = crawl4AiUrl + "/crawl";
 
+  const proxyServer = process.env.SIBYL_CRAWL4AI_PROXY_SERVER;
+
   let res: Response;
 
   try {
@@ -44,6 +46,15 @@ async function fetchFn(url: string, context: PluginContext): Promise<string> {
           simulate_user: true,
           override_navigator: true,
           wait_until: "networkidle",
+          ...(proxyServer
+            ? {
+                proxy_config: {
+                  server: proxyServer,
+                  username: process.env.SIBYL_CRAWL4AI_PROXY_USERNAME,
+                  password: process.env.SIBYL_CRAWL4AI_PROXY_PASSWORD,
+                },
+              }
+            : {}),
         },
       }),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),

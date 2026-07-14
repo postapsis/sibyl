@@ -12,6 +12,10 @@ vi.mock("./plugin-loader.ts", () => ({
   loadPlugins: vi.fn(),
 }));
 
+vi.mock("./setup-command.ts", () => ({
+  runSetup: vi.fn(),
+}));
+
 vi.mock("./exit.ts", () => ({
   exit: vi.fn(() => {
     throw new Error("process.exit");
@@ -22,6 +26,7 @@ import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vite
 import { main } from "./cli.ts";
 import { loadOrCreateConfigFile } from "./setup.ts";
 import { loadPlugins } from "./plugin-loader.ts";
+import { runSetup } from "./setup-command.ts";
 import { exit } from "./exit.ts";
 import type {
   AskPlugin,
@@ -159,6 +164,13 @@ describe("dispatch & argument validation", () => {
     expect(console.error).toHaveBeenCalledWith("Unknown command: bogus");
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining("sibyl - CLI tool"));
     expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it("passes setup flags through to runSetup", async () => {
+    await main(["setup", "--claude", "--codex"]);
+
+    expect(runSetup).toHaveBeenCalledWith(["--claude", "--codex"]);
+    expect(exit).not.toHaveBeenCalled();
   });
 });
 

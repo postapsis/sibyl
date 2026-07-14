@@ -78,9 +78,12 @@ Requires a SearXNG instance with the **JSON output format enabled**. See more at
 
 ### Crawl4AI Fetch
 
-| Variable             | Required | Default                  | Description                                                                               |
-| -------------------- | -------- | ------------------------ | ----------------------------------------------------------------------------------------- |
-| `SIBYL_CRAWL4AI_URL` | No       | `http://localhost:11235` | Base URL of a running Crawl4AI server. Sibyl uses the `/crawl` endpoint to fetch the data |
+| Variable                        | Required | Default                  | Description                                                                               |
+| ------------------------------- | -------- | ------------------------ | ----------------------------------------------------------------------------------------- |
+| `SIBYL_CRAWL4AI_URL`            | No       | `http://localhost:11235` | Base URL of a running Crawl4AI server. Sibyl uses the `/crawl` endpoint to fetch the data |
+| `SIBYL_CRAWL4AI_PROXY_SERVER`   | No       | _(none)_                 | Proxy server URL for the crawler. When unset, no proxy is used.                           |
+| `SIBYL_CRAWL4AI_PROXY_USERNAME` | No       | _(none)_                 | Proxy auth username. Sent only when set and a proxy server is configured.                 |
+| `SIBYL_CRAWL4AI_PROXY_PASSWORD` | No       | _(none)_                 | Proxy auth password. Sent only when set and a proxy server is configured.                 |
 
 Requires a Crawl4AI server, e.g., via Docker. See more at [https://hub.docker.com/r/unclecode/crawl4ai](https://hub.docker.com/r/unclecode/crawl4ai)
 
