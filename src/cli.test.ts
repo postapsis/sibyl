@@ -14,6 +14,7 @@ vi.mock("./plugin-loader.ts", () => ({
 
 vi.mock("./setup-command.ts", () => ({
   runSetup: vi.fn(),
+  runUninstall: vi.fn(),
 }));
 
 vi.mock("./exit.ts", () => ({
@@ -26,7 +27,7 @@ import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vite
 import { main } from "./cli.ts";
 import { loadOrCreateConfigFile } from "./setup.ts";
 import { loadPlugins } from "./plugin-loader.ts";
-import { runSetup } from "./setup-command.ts";
+import { runSetup, runUninstall } from "./setup-command.ts";
 import { exit } from "./exit.ts";
 import type {
   AskPlugin,
@@ -84,15 +85,18 @@ describe("dispatch & argument validation", () => {
     "fetch <url>",
     "ask <url> <question>",
     "setup <targets>",
+    "uninstall <targets>",
     "help",
     "version",
     "Setup targets (at least one required)",
+    "Uninstall targets (at least one required)",
     "--other <file>",
     "Examples:",
     'sibyl search "react vite"',
     "sibyl fetch https://vite.dev/guide",
     'sibyl ask https://vite.dev/guide "how do I start a react project with vite?"',
     "sibyl setup --claude",
+    "sibyl uninstall --claude",
   ];
 
   it.each([
@@ -199,6 +203,13 @@ describe("dispatch & argument validation", () => {
     await main(["setup", "--claude", "--codex"]);
 
     expect(runSetup).toHaveBeenCalledWith(["--claude", "--codex"]);
+    expect(exit).not.toHaveBeenCalled();
+  });
+
+  it("passes uninstall flags through to runUninstall", async () => {
+    await main(["uninstall", "--claude", "--other", "/tmp/example"]);
+
+    expect(runUninstall).toHaveBeenCalledWith(["--claude", "--other", "/tmp/example"]);
     expect(exit).not.toHaveBeenCalled();
   });
 });

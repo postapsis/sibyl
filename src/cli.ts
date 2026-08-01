@@ -16,7 +16,7 @@ import type {
 import type { SibylConfig } from "./@types/sibyl-config.ts";
 import { loadPlugins } from "./plugin-loader.ts";
 import { isValidHttpUrl } from "./utils.ts";
-import { runSetup } from "./setup-command.ts";
+import { runSetup, runUninstall } from "./setup-command.ts";
 import { exit } from "./exit.ts";
 import { pathToFileURL } from "node:url";
 import { realpathSync } from "node:fs";
@@ -85,6 +85,9 @@ export async function main(argv: string[]): Promise<void> {
     }
     case "setup":
       runSetup(rest);
+      break;
+    case "uninstall":
+      runUninstall(rest);
       break;
     case "--version":
     case "version":
@@ -217,6 +220,7 @@ Commands:
   fetch <url>           Fetch the content of a URL
   ask <url> <question>  Answer a question using a URL's content via an LLM
   setup <targets>       Install SIBYL.md into an agent's instruction files
+  uninstall <targets>   Remove Sibyl instruction integrations from agent files
   help                  Show this help
   version               Show version
 
@@ -224,11 +228,16 @@ Setup targets (at least one required):
   --claude --opencode --codex --antigravity   Install for that agent (global)
   --other <file>                              Embed instructions into any .MD agent instructions file
 
+Uninstall targets (at least one required):
+  --claude --opencode --codex --antigravity   Remove the integration for that agent
+  --other <file>                              Remove the embedded block from any agent instructions file
+
 Examples:
   sibyl search "react vite"
   sibyl fetch https://vite.dev/guide
   sibyl ask https://vite.dev/guide "how do I start a react project with vite?"
   sibyl setup --claude
+  sibyl uninstall --claude
 `);
 }
 
