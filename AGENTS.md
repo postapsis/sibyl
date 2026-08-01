@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents when working with code in this repository.
 
 ## Commands
 
@@ -29,9 +29,9 @@ Follow these rules when editing code in this project.
 
 `sibyl` is a CLI web search/crawl tool for AI Agents (`bin: sibyl` → `dist/cli.js`) with a filesystem-based plugin system. Key modules:
 
-- `src/cli.ts` — entry point. Ensures dirs + config exist, loads plugins, builds a `PluginContext` (`buildPluginContext`), and dispatches commands (`search`, `fetch`, `ask`, `setup`, `help`/`--help`/`-h`, `version`/`--version`). `search`, `fetch`, and `ask` are wired up via the async `handleSearch`/`handleFetch`/`handleAsk` helpers (awaited by `main`), each passing the context as the last arg to the selected plugin's `fn`. The `fetch` command prints the fetch plugin's output directly — the CLI doesn't dispatch a separate `parse` step, but a fetch plugin may itself run the configured parse plugin via `context.configuredPlugins.parse` (`builtin-brightdata-fetch`, `builtin-crawl4ai-fetch`, and `builtin-alterlab-fetch` do; `builtin-firecrawl-fetch` does only in its raw-HTML mode; `builtin-exa-fetch` returns content as-is). The `ask` command (`sibyl ask <url> <question>`) passes the URL as the ask plugin's first arg; analogously, an ask plugin may itself fetch that URL via `context.configuredPlugins.fetch` before answering (`builtin-ai-ask` does). The `setup` command is handled synchronously by `runSetup(rest)` (`src/setup-command.ts`) and uses neither plugins nor the `PluginContext` (see The `setup` command). `main` is exported and only auto-runs when the file is the actual CLI entry (`import.meta.url` vs `process.argv[1]` guard), so tests can import it without side effects.
-- `src/setup.ts` — ensures `~/.sibyl` and `~/.sibyl/plugins` exist, and loads/creates/validates `~/.sibyl/config.json` (all on every invocation).
-- `src/setup-command.ts` — implements the `setup` command (`runSetup`): installs the instructions doc into agent tools' global instruction files (see The `setup` command). Distinct from `setup.ts`, which is config bootstrap.
+- `src/cli.ts` — entry point. Ensures dirs + config exist, loads plugins, builds a `PluginContext` (`buildPluginContext`), and dispatches commands (`search`, `fetch`, `ask`, `setup`, `uninstall`, `help`/`--help`/`-h`, `version`/`--version`). `search`, `fetch`, and `ask` are wired up via the async `handleSearch`/`handleFetch`/`handleAsk` helpers (awaited by `main`), each passing the context as the last arg to the selected plugin's `fn`. The `fetch` command prints the fetch plugin's output directly — the CLI doesn't dispatch a separate `parse` step, but a fetch plugin may itself run the configured parse plugin via `context.configuredPlugins.parse` (`builtin-brightdata-fetch`, `builtin-crawl4ai-fetch`, and `builtin-alterlab-fetch` do; `builtin-firecrawl-fetch` does only in its raw-HTML mode; `builtin-exa-fetch` returns content as-is). The `ask` command (`sibyl ask <url> <question>`) passes the URL as the ask plugin's first arg; analogously, an ask plugin may itself fetch that URL via `context.configuredPlugins.fetch` before answering (`builtin-ai-ask` does). The `setup` and `uninstall` commands are handled synchronously by `runSetup(rest)` and `runUninstall(rest)` (`src/setup-command.ts`) and use neither plugins nor the `PluginContext` (see The `setup` and `uninstall` commands). `main` is exported and only auto-runs when the file is the actual CLI entry (`import.meta.url` vs `process.argv[1]` guard), so tests can import it without side effects.
+- `src/setup.ts` — ensures `~/.config/sibyl` and `~/.config/sibyl/plugins` exist, and loads/creates/validates `~/.config/sibyl/config.json` (all on every invocation).
+- `src/setup-command.ts` — implements the `setup` and `uninstall` commands (`runSetup` and `runUninstall`): installs or removes the instructions integration in agent tools' global instruction files (see The `setup` and `uninstall` commands). Distinct from `setup.ts`, which is config bootstrap.
 - `src/instructions.ts` — the bundled `SIBYL.md` content (`buildSibylInstructions(subagentModel)`, which interpolates a per-target cheap model into the "run subagents with …" line) plus the import line, marker, and notice constants used by `setup-command.ts`. Inlined as a string builder (not read from disk) so it ships in `dist`.
 - `src/plugin-loader.ts` — assembles the active plugin set: builtin plugins + external (on-disk) plugins; validates the external ones.
 - `src/plugins/config.ts` — `getBuiltinPlugins()`, the in-repo builtin plugin registry.
@@ -43,7 +43,7 @@ User-facing docs live in `docs/` — `CONFIGURATION.md` (config + per-plugin env
 
 ### Plugin system (the core concept)
 
-Plugins live in `~/.sibyl/plugins/<name>/main.js` (note: `.js`, loaded at runtime via dynamic `import()`). A plugin module must provide a **single export** named `SilbylPlugin` (spelling is part of the contract) — a declaration object with three fields:
+Plugins live in `~/.config/sibyl/plugins/<name>/main.js` (note: `.js`, loaded at runtime via dynamic `import()`). A plugin module must provide a **single export** named `SilbylPlugin` (spelling is part of the contract) — a declaration object with three fields:
 
 1. `name: string` — non-empty, identifies the plugin.
 2. `type: "search" | "fetch" | "ask" | "parse"`.
@@ -72,7 +72,7 @@ When changing the plugin shape, update all three together: `src/@types/plugin.ts
 - To add a builtin: create `src/plugins/builtin-<x>/main.ts` exporting a typed `SilbylPlugin` (with `fn`), then register it in `getBuiltinPlugins()`.
 - `builtin-ai-ask` (the `ask` builtin) reads a URL via the configured fetch plugin, then answers a question over that content using the **Vercel AI SDK**, with the provider selectable via `SIBYL_AI_PROVIDER` (`openai` / `anthropic` / `ollama` / `openrouter`), `SIBYL_MODEL_NAME`, and a per-provider key (`OPENAI_API_KEY` etc.; Ollama uses `OLLAMA_BASE_URL`, no key). It loads `ai` and each provider package (`@ai-sdk/*`, `ollama-ai-provider-v2`, `@openrouter/ai-sdk-provider`) via **dynamic `import()`** inside the `fn` — never at module top level — because `getBuiltinPlugins()` imports every builtin module on every CLI run, so top-level SDK imports would slow `search`/`fetch` too.
 
-### Config (`~/.sibyl/config.json`)
+### Config (`~/.config/sibyl/config.json`)
 
 Shape: `SibylConfig` (`src/@types/sibyl-config.ts`) — `{ plugins: Partial<Record<PluginType, string>>, variables: { name, value }[] }`. `plugins` maps `type` → plugin name (e.g. `{ "search": "builtin-exa-search" }`); keying by type structurally enforces at most one plugin per type. `variables` is a list of `{ name, value }` pairs injected into `process.env`.
 
@@ -81,9 +81,9 @@ Shape: `SibylConfig` (`src/@types/sibyl-config.ts`) — `{ plugins: Partial<Reco
 - `validateConfig()` checks each entry's name is a non-empty string; on failure it `console.error`s and `process.exit(1)` (hard exit, not a skip-with-warning like plugin loading).
 - Plugin selection: `loadPlugins()` loads _all_ available plugins (builtins + disk), then `cli.ts` picks the one to run **by name from config** — e.g. the `search` command looks up `config.plugins.search` and finds the loaded plugin whose `type === "search"` and `name` matches. Missing config entry or no matching loaded plugin → `console.error` + non-zero exit.
 
-### The `setup` command (`sibyl setup <targets>`)
+### The `setup` and `uninstall` commands
 
-`runSetup(args)` (`src/setup-command.ts`) installs the bundled instructions doc into an agent tool's **global** (user-level home-dir) instruction files. It parses per-target flags — at least one is required, else it prints usage and `exit(1)` (also on an unknown flag or an `--other` with no path):
+`runSetup(args)` (`src/setup-command.ts`) installs the bundled instructions doc into an agent tool's **global** (user-level home-dir) instruction files. `runUninstall(args)` removes only those instruction integrations; it does not remove the Sibyl package, `~/.config/sibyl`, or plugins. Both commands parse per-target flags — at least one is required, else they print usage and `exit(1)` (also on an unknown flag or an `--other` with no path):
 
 - `--claude` → writes `~/.claude/SIBYL.md` and adds a `@SIBYL.md` import line to `~/.claude/CLAUDE.md`.
 - `--opencode` → writes `~/.config/opencode/SIBYL.md` and adds `~/.config/opencode/SIBYL.md` to the `instructions[]` array in `~/.config/opencode/opencode.json`.
@@ -92,6 +92,8 @@ Shape: `SibylConfig` (`src/@types/sibyl-config.ts`) — `{ plugins: Partial<Reco
 - `--other <file>` (repeatable; `--other=<file>` also accepted) → embeds the content into an arbitrary file.
 
 Two mechanisms: Claude and opencode **reference** a `SIBYL.md` file each target owns; Codex, Antigravity, and `--other` **embed** the content between `<!-- SIBYL:START -->` / `<!-- SIBYL:END -->` markers, followed by a do-not-edit notice line. Everything is idempotent and refreshes in place on re-run — doc files are overwritten, the marker block (and its trailing notice) is regex-replaced, and the `@SIBYL.md` line / opencode entry are added at most once. The content is inlined in `src/instructions.ts` (a bundled string builder) because the `tsc`-only build has no asset-copy step, so a raw `.md` would never reach `dist`. Each target renders the doc with a cheap model for its own tool (`SUBAGENT_MODEL` in `setup-command.ts`: `claude` → Claude Haiku, `codex` → GPT-5 Mini, `antigravity` → Gemini Flash; `opencode` and `--other` use the generic "a cheap model").
+
+Uninstall is idempotent: missing artifacts are successful no-ops, all duplicate exact references or valid marker blocks are removed, host instruction files are retained, and surrounding non-Sibyl bytes are not normalized. Claude and opencode standalone `SIBYL.md` files are deleted because those paths are Sibyl-owned, even if their contents were modified. An opencode config is parsed before its doc is deleted, so invalid JSON fails without partial cleanup. Embedded files with unmatched, reversed, nested, or otherwise malformed marker pairs are warned about and left unchanged; real I/O or JSON errors fail fast.
 
 ## Conventions
 

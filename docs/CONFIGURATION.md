@@ -2,7 +2,7 @@
 
 ## Configuration file
 
-Sibyl reads its configuration from `~/.sibyl/config.json`, created with sensible defaults on first run. It has two sections:
+Sibyl reads its configuration from `~/.config/sibyl/config.json`, created with sensible defaults on first run. It has two sections:
 
 ```json
 {

@@ -15,13 +15,14 @@ import {
   buildSibylInstructions,
 } from "./instructions.ts";
 
-type SetupTarget = "claude" | "opencode" | "codex" | "antigravity";
+type InstructionTarget = "claude" | "opencode" | "codex" | "antigravity";
+type InstructionAction = "setup" | "uninstall";
 
 // Cheap/fast model each target's agent should spawn subagents with, interpolated into the
 // instructions doc so every tool references a model it can actually run. opencode is
 // provider-agnostic (no canonical cheap model), so it falls back to the generic phrasing.
 const GENERIC_SUBAGENT_MODEL = "a cheap model";
-const SUBAGENT_MODEL: Record<SetupTarget, string> = {
+const SUBAGENT_MODEL: Record<InstructionTarget, string> = {
   claude: "Claude Haiku",
   opencode: GENERIC_SUBAGENT_MODEL,
   codex: "GPT-5 Mini",
@@ -41,8 +42,17 @@ Targets (at least one required):
   --antigravity    Embed instructions into ~/.gemini/GEMINI.md
   --other <file>   Embed instructions into an arbitrary file (repeatable)`;
 
+const UNINSTALL_USAGE = `Usage: sibyl uninstall <targets>
+
+Targets (at least one required):
+  --claude         Remove the ~/.claude SIBYL.md import and doc
+  --opencode       Remove the opencode instructions entry and SIBYL.md
+  --codex          Remove the embedded block from ~/.codex/AGENTS.md
+  --antigravity    Remove the embedded block from ~/.gemini/GEMINI.md
+  --other <file>   Remove the embedded block from an arbitrary file (repeatable)`;
+
 export function runSetup(args: string[]): void {
-  const { targets, otherPaths } = parseSetupArgs(args);
+  const { targets, otherPaths } = parseTargetArgs(args, "setup", SETUP_USAGE);
 
   try {
     const home = os.homedir();
@@ -74,8 +84,47 @@ export function runSetup(args: string[]): void {
   }
 }
 
-function parseSetupArgs(args: string[]): { targets: Set<SetupTarget>; otherPaths: string[] } {
-  const targets = new Set<SetupTarget>();
+export function runUninstall(args: string[]): void {
+  const { targets, otherPaths } = parseTargetArgs(args, "uninstall", UNINSTALL_USAGE);
+
+  try {
+    const home = os.homedir();
+
+    if (targets.has("claude")) {
+      removeImportLine(path.join(home, ".claude", "CLAUDE.md"));
+      removeDoc(path.join(home, ".claude", SIBYL_DOC_FILENAME));
+    }
+
+    if (targets.has("opencode")) {
+      removeOpencodeInstallation(
+        path.join(home, ".config", "opencode", "opencode.json"),
+        path.join(home, ".config", "opencode", SIBYL_DOC_FILENAME),
+      );
+    }
+
+    if (targets.has("codex")) {
+      removeEmbeddedBlock(path.join(home, ".codex", "AGENTS.md"));
+    }
+
+    if (targets.has("antigravity")) {
+      removeEmbeddedBlock(path.join(home, ".gemini", "GEMINI.md"));
+    }
+
+    for (const other of otherPaths) {
+      removeEmbeddedBlock(path.resolve(other));
+    }
+  } catch (error) {
+    console.error(`Error running uninstall: ${error}`);
+    exit(1);
+  }
+}
+
+function parseTargetArgs(
+  args: string[],
+  action: InstructionAction,
+  usage: string,
+): { targets: Set<InstructionTarget>; otherPaths: string[] } {
+  const targets = new Set<InstructionTarget>();
   const otherPaths: string[] = [];
 
   for (let i = 0; i < args.length; i++) {
@@ -86,12 +135,12 @@ function parseSetupArgs(args: string[]): { targets: Set<SetupTarget>; otherPaths
       case "--opencode":
       case "--codex":
       case "--antigravity":
-        targets.add(arg.slice(2) as SetupTarget);
+        targets.add(arg.slice(2) as InstructionTarget);
         break;
       case "--other": {
         const next = args[i + 1];
         if (next === undefined || next.startsWith("--")) {
-          usageError("`--other` requires a file path");
+          usageError("`--other` requires a file path", usage);
         }
         otherPaths.push(next);
         i++;
@@ -101,25 +150,25 @@ function parseSetupArgs(args: string[]): { targets: Set<SetupTarget>; otherPaths
         if (arg.startsWith("--other=")) {
           const value = arg.slice("--other=".length);
           if (value === "") {
-            usageError("`--other` requires a file path");
+            usageError("`--other` requires a file path", usage);
           }
           otherPaths.push(value);
         } else {
-          usageError(`Unknown setup option: ${arg}`);
+          usageError(`Unknown ${action} option: ${arg}`, usage);
         }
     }
   }
 
   if (targets.size === 0 && otherPaths.length === 0) {
-    usageError("At least one target is required");
+    usageError("At least one target is required", usage);
   }
 
   return { targets, otherPaths };
 }
 
-function usageError(message: string): never {
+function usageError(message: string, usage: string): never {
   console.error(message);
-  console.error(SETUP_USAGE);
+  console.error(usage);
   return exit(1);
 }
 
@@ -148,6 +197,26 @@ function addImportLine(file: string): void {
   console.log(`Added ${SIBYL_IMPORT_LINE} to ${file}`);
 }
 
+function removeImportLine(file: string): void {
+  if (!fs.existsSync(file)) {
+    return;
+  }
+
+  const current = fs.readFileSync(file, "utf8");
+  const importLineRe = new RegExp(
+    `^[\\t ]*${escapeRegExp(SIBYL_IMPORT_LINE)}[\\t ]*(?:\\r?\\n|$)`,
+    "gm",
+  );
+  const next = current.replace(importLineRe, "");
+
+  if (next === current) {
+    return;
+  }
+
+  fs.writeFileSync(file, next);
+  console.log(`Removed ${SIBYL_IMPORT_LINE} from ${file}`);
+}
+
 // Adds the doc path to opencode.json's `instructions[]` once, preserving all other config.
 function addOpencodeInstruction(jsonPath: string): void {
   ensureDir(jsonPath);
@@ -166,6 +235,34 @@ function addOpencodeInstruction(jsonPath: string): void {
   config.instructions = list;
   fs.writeFileSync(jsonPath, `${JSON.stringify(config, null, 2)}\n`);
   console.log(`Added ${OPENCODE_INSTRUCTION_REF} to opencode instructions in ${jsonPath}`);
+}
+
+function removeOpencodeInstallation(jsonPath: string, docPath: string): void {
+  const raw = readIfExists(jsonPath).trim();
+
+  if (raw) {
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error(`opencode config must contain a JSON object: ${jsonPath}`);
+    }
+
+    const config = parsed as Record<string, unknown>;
+    const existing = config.instructions;
+
+    if (Array.isArray(existing)) {
+      const filtered = existing.filter((entry) => entry !== OPENCODE_INSTRUCTION_REF);
+
+      if (filtered.length !== existing.length) {
+        config.instructions = filtered;
+        fs.writeFileSync(jsonPath, `${JSON.stringify(config, null, 2)}\n`);
+        console.log(
+          `Removed ${OPENCODE_INSTRUCTION_REF} from opencode instructions in ${jsonPath}`,
+        );
+      }
+    }
+  }
+
+  removeDoc(docPath);
 }
 
 // Embeds the instructions inside sentinel markers followed by a do-not-edit notice. On
@@ -190,6 +287,54 @@ function embedBlock(file: string, subagentModel: string): void {
   const next = base.length ? `${base}\n\n${block}\n` : `${block}\n`;
   fs.writeFileSync(file, next);
   console.log(`Embedded SIBYL block in ${file}`);
+}
+
+function removeEmbeddedBlock(file: string): void {
+  if (!fs.existsSync(file)) {
+    return;
+  }
+
+  const current = fs.readFileSync(file, "utf8");
+  const startCount = countMarkerLines(current, SIBYL_BLOCK_START);
+  const endCount = countMarkerLines(current, SIBYL_BLOCK_END);
+  const blockRe = new RegExp(
+    `^[\\t ]*${escapeRegExp(SIBYL_BLOCK_START)}[\\t ]*\\r?\\n[\\s\\S]*?` +
+      `^[\\t ]*${escapeRegExp(SIBYL_BLOCK_END)}[\\t ]*` +
+      `(?:\\r?\\n^[\\t ]*${escapeRegExp(SIBYL_BLOCK_NOTICE)}[\\t ]*(?:\\r?\\n|$)|\\r?\\n|$)`,
+    "gm",
+  );
+  const matches = [...current.matchAll(blockRe)];
+
+  if (startCount !== endCount || matches.length !== startCount) {
+    if (startCount > 0 || endCount > 0) {
+      console.warn(
+        `Could not safely remove malformed SIBYL block in ${file}; leaving it unchanged`,
+      );
+    }
+    return;
+  }
+
+  if (matches.length === 0) {
+    return;
+  }
+
+  const next = current.replace(blockRe, "");
+  fs.writeFileSync(file, next);
+  console.log(`Removed SIBYL block from ${file}`);
+}
+
+function countMarkerLines(content: string, marker: string): number {
+  const markerRe = new RegExp(`^[\\t ]*${escapeRegExp(marker)}[\\t ]*(?:\\r?\\n|$)`, "gm");
+  return [...content.matchAll(markerRe)].length;
+}
+
+function removeDoc(file: string): void {
+  if (!fs.existsSync(file)) {
+    return;
+  }
+
+  fs.unlinkSync(file);
+  console.log(`Removed instructions doc: ${file}`);
 }
 
 function ensureDir(file: string): void {

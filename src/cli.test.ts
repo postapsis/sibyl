@@ -14,6 +14,7 @@ vi.mock("./plugin-loader.ts", () => ({
 
 vi.mock("./setup-command.ts", () => ({
   runSetup: vi.fn(),
+  runUninstall: vi.fn(),
 }));
 
 vi.mock("./exit.ts", () => ({
@@ -26,7 +27,7 @@ import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vite
 import { main } from "./cli.ts";
 import { loadOrCreateConfigFile } from "./setup.ts";
 import { loadPlugins } from "./plugin-loader.ts";
-import { runSetup } from "./setup-command.ts";
+import { runSetup, runUninstall } from "./setup-command.ts";
 import { exit } from "./exit.ts";
 import type {
   AskPlugin,
@@ -77,6 +78,27 @@ afterEach(() => {
 });
 
 describe("dispatch & argument validation", () => {
+  const helpSections = [
+    "Sibyl - Give your AI agent web search and exploration capabilities, without the bloat.",
+    "Usage:",
+    "search <query>",
+    "fetch <url>",
+    "ask <url> <question>",
+    "setup <targets>",
+    "uninstall <targets>",
+    "help",
+    "version",
+    "Setup targets (at least one required)",
+    "Uninstall targets (at least one required)",
+    "--other <file>",
+    "Examples:",
+    'sibyl search "react vite"',
+    "sibyl fetch https://vite.dev/guide",
+    'sibyl ask https://vite.dev/guide "how do I start a react project with vite?"',
+    "sibyl setup --claude",
+    "sibyl uninstall --claude",
+  ];
+
   it.each([
     { argv: [] as string[], label: "no command" },
     { argv: ["--help"], label: "--help" },
@@ -85,14 +107,21 @@ describe("dispatch & argument validation", () => {
   ])("prints help for $label", async ({ argv }) => {
     await main(argv);
 
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining("sibyl - CLI tool"));
+    const output = vi
+      .mocked(console.log)
+      .mock.calls.map((call) => String(call[0]))
+      .join("\n");
+
+    for (const section of helpSections) {
+      expect(output).toContain(section);
+    }
     expect(exit).not.toHaveBeenCalled();
   });
 
   it.each([["--version"], ["version"]])("prints version for %s", async (arg) => {
     await main([arg]);
 
-    expect(console.log).toHaveBeenCalledWith("sibyl 0.1.0");
+    expect(console.log).toHaveBeenCalledWith("sibyl 0.1.2");
     expect(exit).not.toHaveBeenCalled();
   });
 
@@ -162,7 +191,11 @@ describe("dispatch & argument validation", () => {
     await expect(main(["bogus"])).rejects.toThrow("process.exit");
 
     expect(console.error).toHaveBeenCalledWith("Unknown command: bogus");
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining("sibyl - CLI tool"));
+    expect(console.log).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Sibyl - Give your AI agent web search and exploration capabilities, without the bloat.",
+      ),
+    );
     expect(exit).toHaveBeenCalledWith(1);
   });
 
@@ -170,6 +203,13 @@ describe("dispatch & argument validation", () => {
     await main(["setup", "--claude", "--codex"]);
 
     expect(runSetup).toHaveBeenCalledWith(["--claude", "--codex"]);
+    expect(exit).not.toHaveBeenCalled();
+  });
+
+  it("passes uninstall flags through to runUninstall", async () => {
+    await main(["uninstall", "--claude", "--other", "/tmp/example"]);
+
+    expect(runUninstall).toHaveBeenCalledWith(["--claude", "--other", "/tmp/example"]);
     expect(exit).not.toHaveBeenCalled();
   });
 });
@@ -181,7 +221,7 @@ describe("handleSearch", () => {
     await expect(main(["search", "react"])).rejects.toThrow("process.exit");
 
     expect(console.error).toHaveBeenCalledWith(
-      "No search plugin configured in `~/.sibyl/config.json`",
+      "No search plugin configured in `~/.config/sibyl/config.json`",
     );
     expect(exit).toHaveBeenCalledWith(1);
   });
@@ -245,7 +285,7 @@ describe("handleFetch", () => {
     await expect(main(["fetch", "https://vite.dev"])).rejects.toThrow("process.exit");
 
     expect(console.error).toHaveBeenCalledWith(
-      "No fetch plugin configured in `~/.sibyl/config.json`",
+      "No fetch plugin configured in `~/.config/sibyl/config.json`",
     );
     expect(exit).toHaveBeenCalledWith(1);
   });
@@ -291,7 +331,7 @@ describe("handleAsk", () => {
     await expect(main(["ask", "https://vite.dev", "q"])).rejects.toThrow("process.exit");
 
     expect(console.error).toHaveBeenCalledWith(
-      "No ask plugin configured in `~/.sibyl/config.json`",
+      "No ask plugin configured in `~/.config/sibyl/config.json`",
     );
     expect(exit).toHaveBeenCalledWith(1);
   });

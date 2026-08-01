@@ -9,7 +9,7 @@ import type { SibylConfig } from "./@types/sibyl-config.ts";
 import { exit } from "./exit.ts";
 
 export function loadOrCreateConfigDir(): void {
-  const configDir = path.join(os.homedir(), ".sibyl");
+  const configDir = path.join(os.homedir(), ".config", "sibyl");
 
   if (!fs.existsSync(configDir)) {
     console.log(`Creating config directory at ${configDir}`);
@@ -18,7 +18,7 @@ export function loadOrCreateConfigDir(): void {
 }
 
 export function loadOrCreateConfigFile(): SibylConfig {
-  const configFile = path.join(os.homedir(), ".sibyl", "config.json");
+  const configFile = path.join(os.homedir(), ".config", "sibyl", "config.json");
 
   if (!fs.existsSync(configFile) || isFileEmptySync(configFile)) {
     writeDefaultSibylConfig();
@@ -40,7 +40,7 @@ function injectConfigVariables(config: SibylConfig): void {
 }
 
 export function loadOrCreatePluginsDir(): void {
-  const pluginsDir = path.join(os.homedir(), ".sibyl", "plugins");
+  const pluginsDir = path.join(os.homedir(), ".config", "sibyl", "plugins");
 
   if (!fs.existsSync(pluginsDir)) {
     console.log(`Creating plugins directory at ${pluginsDir}`);
@@ -49,7 +49,7 @@ export function loadOrCreatePluginsDir(): void {
 }
 
 export function writeDefaultSibylConfig(): void {
-  const configFile = path.join(os.homedir(), ".sibyl", "config.json");
+  const configFile = path.join(os.homedir(), ".config", "sibyl", "config.json");
   console.log(`Creating config file at ${configFile}`);
 
   const sibylConfig: SibylConfig = {

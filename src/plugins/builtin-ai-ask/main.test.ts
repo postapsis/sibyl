@@ -58,7 +58,8 @@ afterEach(() => {
 describe("builtin-ai-ask", () => {
   it("throws when no `fetch` plugin is configured", async () => {
     await expect(askFn("https://a.com", "what?", makeContext())).rejects.toThrow(
-      "No `fetch` plugin configured.",
+      "No `fetch` plugin configured. The `ask` plugin reads the URL through the configured " +
+        "fetch plugin — set `plugins.fetch` in `~/.config/sibyl/config.json`.",
     );
   });
 
