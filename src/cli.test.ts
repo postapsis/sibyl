@@ -77,6 +77,24 @@ afterEach(() => {
 });
 
 describe("dispatch & argument validation", () => {
+  const helpSections = [
+    "Sibyl 0.1.2 - Give your AI agent web search and exploration capabilities, without the bloat.",
+    "Usage:",
+    "search <query>",
+    "fetch <url>",
+    "ask <url> <question>",
+    "setup <targets>",
+    "help",
+    "version",
+    "Setup targets (at least one required)",
+    "--other <file>",
+    "Examples:",
+    'sibyl search "react vite"',
+    "sibyl fetch https://vite.dev/guide",
+    'sibyl ask https://vite.dev/guide "how do I start a react project with vite?"',
+    "sibyl setup --claude",
+  ];
+
   it.each([
     { argv: [] as string[], label: "no command" },
     { argv: ["--help"], label: "--help" },
@@ -85,14 +103,21 @@ describe("dispatch & argument validation", () => {
   ])("prints help for $label", async ({ argv }) => {
     await main(argv);
 
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining("sibyl - CLI tool"));
+    const output = vi
+      .mocked(console.log)
+      .mock.calls.map((call) => String(call[0]))
+      .join("\n");
+
+    for (const section of helpSections) {
+      expect(output).toContain(section);
+    }
     expect(exit).not.toHaveBeenCalled();
   });
 
   it.each([["--version"], ["version"]])("prints version for %s", async (arg) => {
     await main([arg]);
 
-    expect(console.log).toHaveBeenCalledWith("sibyl 0.1.0");
+    expect(console.log).toHaveBeenCalledWith("sibyl 0.1.2");
     expect(exit).not.toHaveBeenCalled();
   });
 
@@ -162,7 +187,11 @@ describe("dispatch & argument validation", () => {
     await expect(main(["bogus"])).rejects.toThrow("process.exit");
 
     expect(console.error).toHaveBeenCalledWith("Unknown command: bogus");
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining("sibyl - CLI tool"));
+    expect(console.log).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "Sibyl 0.1.2 - Give your AI agent web search and exploration capabilities, without the bloat.",
+      ),
+    );
     expect(exit).toHaveBeenCalledWith(1);
   });
 

@@ -88,7 +88,7 @@ export async function main(argv: string[]): Promise<void> {
       break;
     case "--version":
     case "version":
-      console.log("sibyl 0.1.0");
+      console.log("sibyl 0.1.2");
       break;
     default:
       console.error(`Unknown command: ${command}`);
@@ -207,7 +207,7 @@ async function handleAsk(
 }
 
 function printHelp(): void {
-  console.log(`sibyl - CLI tool
+  console.log(`Sibyl 0.1.2 - Give your AI agent web search and exploration capabilities, without the bloat.
 
 Usage:
   sibyl <command> [options]
