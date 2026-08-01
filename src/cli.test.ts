@@ -78,7 +78,7 @@ afterEach(() => {
 
 describe("dispatch & argument validation", () => {
   const helpSections = [
-    "Sibyl 0.1.2 - Give your AI agent web search and exploration capabilities, without the bloat.",
+    "Sibyl - Give your AI agent web search and exploration capabilities, without the bloat.",
     "Usage:",
     "search <query>",
     "fetch <url>",
@@ -189,7 +189,7 @@ describe("dispatch & argument validation", () => {
     expect(console.error).toHaveBeenCalledWith("Unknown command: bogus");
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining(
-        "Sibyl 0.1.2 - Give your AI agent web search and exploration capabilities, without the bloat.",
+        "Sibyl - Give your AI agent web search and exploration capabilities, without the bloat.",
       ),
     );
     expect(exit).toHaveBeenCalledWith(1);

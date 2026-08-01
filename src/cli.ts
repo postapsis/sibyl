@@ -207,7 +207,7 @@ async function handleAsk(
 }
 
 function printHelp(): void {
-  console.log(`Sibyl 0.1.2 - Give your AI agent web search and exploration capabilities, without the bloat.
+  console.log(`Sibyl - Give your AI agent web search and exploration capabilities, without the bloat.
 
 Usage:
   sibyl <command> [options]
