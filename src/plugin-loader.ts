@@ -24,7 +24,7 @@ export async function loadPlugins(): Promise<PluginTypeDeclaration[]> {
 }
 
 async function loadExternalPlugins(): Promise<PluginTypeDeclaration[]> {
-  const pluginDir = path.join(os.homedir(), ".sibyl", "plugins");
+  const pluginDir = path.join(os.homedir(), ".config", "sibyl", "plugins");
   const result: PluginTypeDeclaration[] = [];
 
   if (!fs.existsSync(pluginDir)) {

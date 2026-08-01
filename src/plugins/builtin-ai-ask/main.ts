@@ -57,7 +57,7 @@ async function askFn(src: string, query: string, context: PluginContext): Promis
   if (!fetchPlugin) {
     throw new Error(
       "No `fetch` plugin configured. The `ask` plugin reads the URL through the configured " +
-        "fetch plugin — set `plugins.fetch` in `~/.sibyl/config.json`.",
+        "fetch plugin — set `plugins.fetch` in `~/.config/sibyl/config.json`.",
     );
   }
 

@@ -24,7 +24,7 @@ let pluginsDir: string;
 
 beforeEach(() => {
   homeDirPath = fs.mkdtempSync(path.join(os.tmpdir(), "sibyl-test-"));
-  sibylDir = path.join(homeDirPath, ".sibyl");
+  sibylDir = path.join(homeDirPath, ".config", "sibyl");
   pluginsDir = path.join(sibylDir, "plugins");
 
   fs.mkdirSync(sibylDir, { recursive: true });
@@ -46,6 +46,31 @@ it("returns only built-in plugins when `plugins` dir is absent", async () => {
   expect(plugins).toEqual(builtinPlugins);
   expect(console.warn).not.toHaveBeenCalled();
   expect(console.error).not.toHaveBeenCalled();
+});
+
+it("does not load plugins from the legacy `~/.sibyl/plugins` dir", async () => {
+  const legacyPluginsDir = path.join(homeDirPath, ".sibyl", "plugins");
+  fs.mkdirSync(path.join(legacyPluginsDir, "legacy-plugin"), { recursive: true });
+  fs.writeFileSync(
+    path.join(legacyPluginsDir, "legacy-plugin", "main.js"),
+    `
+async function searchFn(query) {
+    return "legacy " + query;
+}
+
+export const SilbylPlugin = {
+    name: "legacy-plugin",
+    type: "search",
+    fn: searchFn
+}
+    `,
+  );
+
+  const builtinPlugins = getBuiltinPlugins();
+  const plugins = await loadPlugins();
+
+  expect(plugins).toEqual(builtinPlugins);
+  expect(plugins.some((plugin) => plugin.name === "legacy-plugin")).toBe(false);
 });
 
 describe("loads plugins correctly", () => {

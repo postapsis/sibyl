@@ -121,7 +121,7 @@ async function handleSearch(
   const searchPluginName = config.plugins.search;
 
   if (!searchPluginName) {
-    console.error("No search plugin configured in `~/.sibyl/config.json`");
+    console.error("No search plugin configured in `~/.config/sibyl/config.json`");
     exit(1);
   }
 
@@ -152,7 +152,7 @@ async function handleFetch(
   const fetchPluginName = config.plugins.fetch;
 
   if (!fetchPluginName) {
-    console.error("No fetch plugin configured in `~/.sibyl/config.json`");
+    console.error("No fetch plugin configured in `~/.config/sibyl/config.json`");
     exit(1);
   }
 
@@ -184,7 +184,7 @@ async function handleAsk(
   const askPluginName = config.plugins.ask;
 
   if (!askPluginName) {
-    console.error("No ask plugin configured in `~/.sibyl/config.json`");
+    console.error("No ask plugin configured in `~/.config/sibyl/config.json`");
     exit(1);
   }
 

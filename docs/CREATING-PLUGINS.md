@@ -5,13 +5,13 @@
 Plugins are loaded at runtime from your home config directory. Sibyl creates these directories on first run:
 
 ```
-~/.sibyl/
+~/.config/sibyl/
 └── plugins/
     └── <your-plugin>/
         └── main.js
 ```
 
-To add a plugin, create a folder under `~/.sibyl/plugins/` and put a `main.js` inside it. (Folder names starting with
+To add a plugin, create a folder under `~/.config/sibyl/plugins/` and put a `main.js` inside it. (Folder names starting with
 `builtin` are reserved and will be skipped.)
 
 ### Plugin Interface
@@ -46,7 +46,7 @@ the argument if you don't need it.
 
 #### Example: A search plugin
 
-`~/.sibyl/plugins/my-search-plugin/main.js`
+`~/.config/sibyl/plugins/my-search-plugin/main.js`
 
 ```js
 async function searchFn(query) {
@@ -63,7 +63,7 @@ export const SilbylPlugin = {
 
 #### Example: A fetch plugin
 
-`~/.sibyl/plugins/my-fetch-plugin/main.js`
+`~/.config/sibyl/plugins/my-fetch-plugin/main.js`
 
 ```js
 async function fetchFn(url) {
@@ -80,7 +80,7 @@ export const SilbylPlugin = {
 
 #### Example: An ask plugin
 
-`~/.sibyl/plugins/my-llm-ask-plugin/main.js`
+`~/.config/sibyl/plugins/my-llm-ask-plugin/main.js`
 
 ```js
 async function askFn(parsedContent, query) {
@@ -97,7 +97,7 @@ export const SilbylPlugin = {
 
 #### Example: A HTML parser plugin
 
-`~/.sibyl/plugins/my-parse-plugin/main.js`
+`~/.config/sibyl/plugins/my-parse-plugin/main.js`
 
 ```js
 async function parseHtmlFn(html) {

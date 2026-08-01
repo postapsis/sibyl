@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents when working with code in this repository.
 
 ## Commands
 
@@ -30,7 +30,7 @@ Follow these rules when editing code in this project.
 `sibyl` is a CLI web search/crawl tool for AI Agents (`bin: sibyl` → `dist/cli.js`) with a filesystem-based plugin system. Key modules:
 
 - `src/cli.ts` — entry point. Ensures dirs + config exist, loads plugins, builds a `PluginContext` (`buildPluginContext`), and dispatches commands (`search`, `fetch`, `ask`, `setup`, `help`/`--help`/`-h`, `version`/`--version`). `search`, `fetch`, and `ask` are wired up via the async `handleSearch`/`handleFetch`/`handleAsk` helpers (awaited by `main`), each passing the context as the last arg to the selected plugin's `fn`. The `fetch` command prints the fetch plugin's output directly — the CLI doesn't dispatch a separate `parse` step, but a fetch plugin may itself run the configured parse plugin via `context.configuredPlugins.parse` (`builtin-brightdata-fetch`, `builtin-crawl4ai-fetch`, and `builtin-alterlab-fetch` do; `builtin-firecrawl-fetch` does only in its raw-HTML mode; `builtin-exa-fetch` returns content as-is). The `ask` command (`sibyl ask <url> <question>`) passes the URL as the ask plugin's first arg; analogously, an ask plugin may itself fetch that URL via `context.configuredPlugins.fetch` before answering (`builtin-ai-ask` does). The `setup` command is handled synchronously by `runSetup(rest)` (`src/setup-command.ts`) and uses neither plugins nor the `PluginContext` (see The `setup` command). `main` is exported and only auto-runs when the file is the actual CLI entry (`import.meta.url` vs `process.argv[1]` guard), so tests can import it without side effects.
-- `src/setup.ts` — ensures `~/.sibyl` and `~/.sibyl/plugins` exist, and loads/creates/validates `~/.sibyl/config.json` (all on every invocation).
+- `src/setup.ts` — ensures `~/.config/sibyl` and `~/.config/sibyl/plugins` exist, and loads/creates/validates `~/.config/sibyl/config.json` (all on every invocation).
 - `src/setup-command.ts` — implements the `setup` command (`runSetup`): installs the instructions doc into agent tools' global instruction files (see The `setup` command). Distinct from `setup.ts`, which is config bootstrap.
 - `src/instructions.ts` — the bundled `SIBYL.md` content (`buildSibylInstructions(subagentModel)`, which interpolates a per-target cheap model into the "run subagents with …" line) plus the import line, marker, and notice constants used by `setup-command.ts`. Inlined as a string builder (not read from disk) so it ships in `dist`.
 - `src/plugin-loader.ts` — assembles the active plugin set: builtin plugins + external (on-disk) plugins; validates the external ones.
@@ -43,7 +43,7 @@ User-facing docs live in `docs/` — `CONFIGURATION.md` (config + per-plugin env
 
 ### Plugin system (the core concept)
 
-Plugins live in `~/.sibyl/plugins/<name>/main.js` (note: `.js`, loaded at runtime via dynamic `import()`). A plugin module must provide a **single export** named `SilbylPlugin` (spelling is part of the contract) — a declaration object with three fields:
+Plugins live in `~/.config/sibyl/plugins/<name>/main.js` (note: `.js`, loaded at runtime via dynamic `import()`). A plugin module must provide a **single export** named `SilbylPlugin` (spelling is part of the contract) — a declaration object with three fields:
 
 1. `name: string` — non-empty, identifies the plugin.
 2. `type: "search" | "fetch" | "ask" | "parse"`.
@@ -72,7 +72,7 @@ When changing the plugin shape, update all three together: `src/@types/plugin.ts
 - To add a builtin: create `src/plugins/builtin-<x>/main.ts` exporting a typed `SilbylPlugin` (with `fn`), then register it in `getBuiltinPlugins()`.
 - `builtin-ai-ask` (the `ask` builtin) reads a URL via the configured fetch plugin, then answers a question over that content using the **Vercel AI SDK**, with the provider selectable via `SIBYL_AI_PROVIDER` (`openai` / `anthropic` / `ollama` / `openrouter`), `SIBYL_MODEL_NAME`, and a per-provider key (`OPENAI_API_KEY` etc.; Ollama uses `OLLAMA_BASE_URL`, no key). It loads `ai` and each provider package (`@ai-sdk/*`, `ollama-ai-provider-v2`, `@openrouter/ai-sdk-provider`) via **dynamic `import()`** inside the `fn` — never at module top level — because `getBuiltinPlugins()` imports every builtin module on every CLI run, so top-level SDK imports would slow `search`/`fetch` too.
 
-### Config (`~/.sibyl/config.json`)
+### Config (`~/.config/sibyl/config.json`)
 
 Shape: `SibylConfig` (`src/@types/sibyl-config.ts`) — `{ plugins: Partial<Record<PluginType, string>>, variables: { name, value }[] }`. `plugins` maps `type` → plugin name (e.g. `{ "search": "builtin-exa-search" }`); keying by type structurally enforces at most one plugin per type. `variables` is a list of `{ name, value }` pairs injected into `process.env`.
 

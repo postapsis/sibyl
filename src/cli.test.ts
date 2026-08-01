@@ -181,7 +181,7 @@ describe("handleSearch", () => {
     await expect(main(["search", "react"])).rejects.toThrow("process.exit");
 
     expect(console.error).toHaveBeenCalledWith(
-      "No search plugin configured in `~/.sibyl/config.json`",
+      "No search plugin configured in `~/.config/sibyl/config.json`",
     );
     expect(exit).toHaveBeenCalledWith(1);
   });
@@ -245,7 +245,7 @@ describe("handleFetch", () => {
     await expect(main(["fetch", "https://vite.dev"])).rejects.toThrow("process.exit");
 
     expect(console.error).toHaveBeenCalledWith(
-      "No fetch plugin configured in `~/.sibyl/config.json`",
+      "No fetch plugin configured in `~/.config/sibyl/config.json`",
     );
     expect(exit).toHaveBeenCalledWith(1);
   });
@@ -291,7 +291,7 @@ describe("handleAsk", () => {
     await expect(main(["ask", "https://vite.dev", "q"])).rejects.toThrow("process.exit");
 
     expect(console.error).toHaveBeenCalledWith(
-      "No ask plugin configured in `~/.sibyl/config.json`",
+      "No ask plugin configured in `~/.config/sibyl/config.json`",
     );
     expect(exit).toHaveBeenCalledWith(1);
   });

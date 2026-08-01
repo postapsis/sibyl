@@ -45,7 +45,7 @@ let envSnapshot: NodeJS.ProcessEnv;
 beforeEach(() => {
   // Fresh fake home per test; only homedir() is mocked, real fs is used.
   home = fs.mkdtempSync(path.join(os.tmpdir(), "sibyl-test-"));
-  sibylDir = path.join(home, ".sibyl");
+  sibylDir = path.join(home, ".config", "sibyl");
   configFile = path.join(sibylDir, "config.json");
   pluginsDir = path.join(sibylDir, "plugins");
 
@@ -69,7 +69,7 @@ afterEach(() => {
 });
 
 describe("loads or creates config dir", () => {
-  it("creates ~/.sibyl when missing", () => {
+  it("creates ~/.config/sibyl when missing", () => {
     expect(fs.existsSync(sibylDir)).toBe(false);
 
     loadOrCreateConfigDir();
@@ -79,7 +79,7 @@ describe("loads or creates config dir", () => {
     expect(console.error).not.toHaveBeenCalled();
   });
 
-  it("does nothing when ~/.sibyl already exists", () => {
+  it("does nothing when ~/.config/sibyl already exists", () => {
     fs.mkdirSync(sibylDir, { recursive: true });
     const mkdir = vi.spyOn(fs, "mkdirSync");
 
@@ -92,7 +92,7 @@ describe("loads or creates config dir", () => {
 });
 
 describe("loads or creates plugins dir", () => {
-  it("creates ~/.sibyl/plugins when missing", () => {
+  it("creates ~/.config/sibyl/plugins when missing", () => {
     expect(fs.existsSync(pluginsDir)).toBe(false);
 
     loadOrCreatePluginsDir();
@@ -115,7 +115,7 @@ describe("loads or creates plugins dir", () => {
 });
 
 describe("writes default sibyl config", () => {
-  it("writes the default config to ~/.sibyl/config.json", () => {
+  it("writes the default config to ~/.config/sibyl/config.json", () => {
     fs.mkdirSync(sibylDir, { recursive: true });
 
     writeDefaultSibylConfig();
