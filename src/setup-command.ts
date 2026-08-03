@@ -5,6 +5,17 @@
 import path from "path";
 import fs from "fs";
 import os from "os";
+import {
+  applyEdits,
+  findNodeAtLocation,
+  modify,
+  parse,
+  parseTree,
+  printParseErrorCode,
+  stripComments,
+  type FormattingOptions,
+  type ParseError,
+} from "jsonc-parser";
 import { exit } from "./exit.ts";
 import {
   SIBYL_BLOCK_END,
@@ -17,6 +28,15 @@ import {
 
 type InstructionTarget = "claude" | "opencode" | "codex" | "antigravity";
 type InstructionAction = "setup" | "uninstall";
+type JsonPath = (string | number)[];
+
+type OpencodeConfig = {
+  path: string;
+  exists: boolean;
+  raw: string;
+  instructions: unknown[] | undefined;
+  formattingOptions: FormattingOptions;
+};
 
 // Cheap/fast model each target's agent should spawn subagents with, interpolated into the
 // instructions doc so every tool references a model it can actually run. opencode is
@@ -32,12 +52,14 @@ const SUBAGENT_MODEL: Record<InstructionTarget, string> = {
 // Path opencode stores in its `instructions[]` array. Kept in tilde form (opencode expands
 // `~`) so it stays portable, while the doc itself is written to the expanded path.
 const OPENCODE_INSTRUCTION_REF = `~/.config/opencode/${SIBYL_DOC_FILENAME}`;
+const OPENCODE_JSON_FILENAME = "opencode.json";
+const OPENCODE_JSONC_FILENAME = "opencode.jsonc";
 
 const SETUP_USAGE = `Usage: sibyl setup <targets>
 
 Targets (at least one required):
   --claude         Install into ~/.claude (CLAUDE.md ${SIBYL_IMPORT_LINE} import + SIBYL.md)
-  --opencode       Install into ~/.config/opencode (opencode.json instructions + SIBYL.md)
+  --opencode       Install into ~/.config/opencode (opencode.json/jsonc instructions + SIBYL.md)
   --codex          Embed instructions into ~/.codex/AGENTS.md
   --antigravity    Embed instructions into ~/.gemini/GEMINI.md
   --other <file>   Embed instructions into an arbitrary file (repeatable)`;
@@ -46,7 +68,7 @@ const UNINSTALL_USAGE = `Usage: sibyl uninstall <targets>
 
 Targets (at least one required):
   --claude         Remove the ~/.claude SIBYL.md import and doc
-  --opencode       Remove the opencode instructions entry and SIBYL.md
+  --opencode       Remove opencode.json/jsonc instructions entries and SIBYL.md
   --codex          Remove the embedded block from ~/.codex/AGENTS.md
   --antigravity    Remove the embedded block from ~/.gemini/GEMINI.md
   --other <file>   Remove the embedded block from an arbitrary file (repeatable)`;
@@ -63,8 +85,7 @@ export function runSetup(args: string[]): void {
     }
 
     if (targets.has("opencode")) {
-      writeDoc(path.join(home, ".config", "opencode", SIBYL_DOC_FILENAME), SUBAGENT_MODEL.opencode);
-      addOpencodeInstruction(path.join(home, ".config", "opencode", "opencode.json"));
+      installOpencode(home);
     }
 
     if (targets.has("codex")) {
@@ -96,10 +117,7 @@ export function runUninstall(args: string[]): void {
     }
 
     if (targets.has("opencode")) {
-      removeOpencodeInstallation(
-        path.join(home, ".config", "opencode", "opencode.json"),
-        path.join(home, ".config", "opencode", SIBYL_DOC_FILENAME),
-      );
+      uninstallOpencode(home);
     }
 
     if (targets.has("codex")) {
@@ -217,52 +235,278 @@ function removeImportLine(file: string): void {
   console.log(`Removed ${SIBYL_IMPORT_LINE} from ${file}`);
 }
 
-// Adds the doc path to opencode.json's `instructions[]` once, preserving all other config.
-function addOpencodeInstruction(jsonPath: string): void {
-  ensureDir(jsonPath);
-  const raw = readIfExists(jsonPath).trim();
-  const config: Record<string, unknown> = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+function installOpencode(home: string): void {
+  const configs = loadOpencodeConfigs(home);
+  const selected = selectOpencodeConfig(configs);
+  const selectedIndex = configs.indexOf(selected);
+  const referenceCount = configs.reduce(
+    (count, config) => count + countOpencodeReferences(config.instructions),
+    0,
+  );
+  const selectedReferenceCount = countOpencodeReferences(selected.instructions);
+  const shouldCanonicalize = referenceCount !== 1 || selectedReferenceCount !== 1;
+  const nextContents = shouldCanonicalize
+    ? configs.map((config) => removeOpencodeReferences(config))
+    : configs.map((config) => config.raw);
 
-  const existing = config.instructions;
-  const list: unknown[] = Array.isArray(existing) ? existing : [];
+  if (shouldCanonicalize) {
+    const cleanedSelected = nextContents[selectedIndex];
+    if (cleanedSelected === undefined) {
+      throw new Error(`Could not select an OpenCode config to update`);
+    }
 
-  if (list.includes(OPENCODE_INSTRUCTION_REF)) {
-    console.log(`opencode instructions already reference ${OPENCODE_INSTRUCTION_REF}`);
-    return;
+    let nextSelected = addOpencodeReference(selected, cleanedSelected);
+    if (
+      selected.raw.trim() === "" &&
+      !nextSelected.endsWith(selected.formattingOptions.eol ?? "\n")
+    ) {
+      nextSelected += selected.formattingOptions.eol ?? "\n";
+    }
+    nextContents[selectedIndex] = nextSelected;
   }
 
-  list.push(OPENCODE_INSTRUCTION_REF);
-  config.instructions = list;
-  fs.writeFileSync(jsonPath, `${JSON.stringify(config, null, 2)}\n`);
-  console.log(`Added ${OPENCODE_INSTRUCTION_REF} to opencode instructions in ${jsonPath}`);
+  writeChangedOpencodeConfigs(configs, nextContents);
+
+  writeOpencodeDoc(
+    path.join(home, ".config", "opencode", SIBYL_DOC_FILENAME),
+    SUBAGENT_MODEL.opencode,
+  );
 }
 
-function removeOpencodeInstallation(jsonPath: string, docPath: string): void {
-  const raw = readIfExists(jsonPath).trim();
+function uninstallOpencode(home: string): void {
+  const configs = loadOpencodeConfigs(home);
+  const nextContents = configs.map((config) => removeOpencodeReferences(config));
 
-  if (raw) {
-    const parsed = JSON.parse(raw) as unknown;
-    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-      throw new Error(`opencode config must contain a JSON object: ${jsonPath}`);
-    }
+  writeChangedOpencodeConfigs(configs, nextContents);
+  removeDoc(path.join(home, ".config", "opencode", SIBYL_DOC_FILENAME));
+}
 
-    const config = parsed as Record<string, unknown>;
-    const existing = config.instructions;
+function getOpencodeConfigPaths(home: string): string[] {
+  const directory = path.join(home, ".config", "opencode");
+  return [
+    path.join(directory, OPENCODE_JSONC_FILENAME),
+    path.join(directory, OPENCODE_JSON_FILENAME),
+  ];
+}
 
-    if (Array.isArray(existing)) {
-      const filtered = existing.filter((entry) => entry !== OPENCODE_INSTRUCTION_REF);
+function loadOpencodeConfigs(home: string): OpencodeConfig[] {
+  return getOpencodeConfigPaths(home).map((configPath) => {
+    const exists = fs.existsSync(configPath);
+    const raw = exists ? fs.readFileSync(configPath, "utf8") : "";
+    const value = parseOpencodeConfig(raw, configPath);
 
-      if (filtered.length !== existing.length) {
-        config.instructions = filtered;
-        fs.writeFileSync(jsonPath, `${JSON.stringify(config, null, 2)}\n`);
-        console.log(
-          `Removed ${OPENCODE_INSTRUCTION_REF} from opencode instructions in ${jsonPath}`,
-        );
-      }
-    }
+    return {
+      path: configPath,
+      exists,
+      raw,
+      instructions: getOpencodeInstructions(value, configPath),
+      formattingOptions: getOpencodeFormattingOptions(raw),
+    };
+  });
+}
+
+function parseOpencodeConfig(raw: string, configPath: string): Record<string, unknown> {
+  if (stripComments(raw).trim() === "") {
+    return {};
   }
 
-  removeDoc(docPath);
+  const errors: ParseError[] = [];
+  const parsed = parse(raw, errors, { allowTrailingComma: true }) as unknown;
+  const firstError = errors[0];
+
+  if (firstError !== undefined) {
+    throw new Error(
+      `Invalid opencode config ${configPath}: ${printParseErrorCode(firstError.error)} at offset ${firstError.offset}`,
+    );
+  }
+
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error(`opencode config must contain a JSON object: ${configPath}`);
+  }
+
+  return parsed as Record<string, unknown>;
+}
+
+function getOpencodeInstructions(
+  config: Record<string, unknown>,
+  configPath: string,
+): unknown[] | undefined {
+  if (!Object.prototype.hasOwnProperty.call(config, "instructions")) {
+    return undefined;
+  }
+
+  if (!Array.isArray(config.instructions)) {
+    throw new Error(`opencode config instructions must be an array: ${configPath}`);
+  }
+
+  return config.instructions;
+}
+
+function getOpencodeFormattingOptions(raw: string): FormattingOptions {
+  const eol = raw.match(/\r\n|\r|\n/)?.[0] ?? "\n";
+  const indentMatches = [...raw.matchAll(/^( +|\t+)\S/gm)]
+    .map((match) => match[1])
+    .filter((indent): indent is string => indent !== undefined);
+  const firstIndent = indentMatches[0];
+
+  if (firstIndent?.includes("\t")) {
+    return { eol, insertSpaces: false, tabSize: 2 };
+  }
+
+  const spaceWidths = indentMatches.map((indent) => indent.length).filter((width) => width > 0);
+
+  return {
+    eol,
+    insertSpaces: true,
+    tabSize: spaceWidths.length > 0 ? Math.min(...spaceWidths) : 2,
+  };
+}
+
+function selectOpencodeConfig(configs: OpencodeConfig[]): OpencodeConfig {
+  const selected = configs.find((config) => config.exists);
+  const fallback = configs[0];
+  if (selected !== undefined) {
+    return selected;
+  }
+
+  if (fallback !== undefined) {
+    return fallback;
+  }
+
+  throw new Error("Could not select an OpenCode config");
+}
+
+function countOpencodeReferences(instructions: unknown[] | undefined): number {
+  return instructions?.filter((entry) => entry === OPENCODE_INSTRUCTION_REF).length ?? 0;
+}
+
+function removeOpencodeReferences(config: OpencodeConfig): string {
+  if (!config.exists || config.instructions === undefined) {
+    return config.raw;
+  }
+
+  const matchingIndices = config.instructions.reduce<number[]>((indices, entry, index) => {
+    if (entry === OPENCODE_INSTRUCTION_REF) {
+      indices.push(index);
+    }
+    return indices;
+  }, []);
+  let next = config.raw;
+
+  for (const index of matchingIndices.reverse()) {
+    next = removeOpencodeArrayItem(next, index);
+  }
+
+  return next;
+}
+
+function removeOpencodeArrayItem(raw: string, index: number): string {
+  const tree = parseTree(raw, [], { allowTrailingComma: true });
+  const array = tree === undefined ? undefined : findNodeAtLocation(tree, ["instructions"]);
+  const item = array?.children?.[index];
+
+  if (array?.type !== "array" || item === undefined || array.children === undefined) {
+    throw new Error(`Could not remove an OpenCode instruction entry at index ${index}`);
+  }
+
+  const previous = array.children[index - 1];
+  const next = array.children[index + 1];
+  const separator =
+    next !== undefined
+      ? findTrailingComma(raw, item.offset + item.length, next.offset)
+      : previous !== undefined
+        ? findTrailingComma(raw, previous.offset + previous.length, item.offset)
+        : findTrailingComma(raw, item.offset + item.length, array.offset + array.length - 1);
+
+  if (separator === undefined && (previous !== undefined || next !== undefined)) {
+    throw new Error(`Could not find an OpenCode instruction separator at index ${index}`);
+  }
+
+  const ranges = [{ offset: item.offset, length: item.length }];
+  if (separator !== undefined) {
+    ranges.push({ offset: separator, length: 1 });
+  }
+
+  return ranges
+    .sort((left, right) => right.offset - left.offset)
+    .reduce(
+      (content, range) =>
+        content.slice(0, range.offset) + content.slice(range.offset + range.length),
+      raw,
+    );
+}
+
+function findTrailingComma(raw: string, start: number, end: number): number | undefined {
+  let index = start;
+
+  while (index < end) {
+    const character = raw[index];
+    if (character === undefined || /\s/.test(character)) {
+      index++;
+      continue;
+    }
+
+    if (raw.startsWith("//", index)) {
+      const lineEndOffset = raw.slice(index + 2).search(/[\r\n]/);
+      const lineEnd = lineEndOffset === -1 ? -1 : index + 2 + lineEndOffset;
+      index = lineEnd === -1 || lineEnd >= end ? end : lineEnd + 1;
+      continue;
+    }
+
+    if (raw.startsWith("/*", index)) {
+      const commentEnd = raw.indexOf("*/", index + 2);
+      index = commentEnd === -1 || commentEnd + 2 >= end ? end : commentEnd + 2;
+      continue;
+    }
+
+    return character === "," ? index : undefined;
+  }
+
+  return undefined;
+}
+
+function addOpencodeReference(config: OpencodeConfig, raw: string): string {
+  if (config.instructions !== undefined) {
+    return applyOpencodeEdit(
+      raw,
+      ["instructions", -1],
+      OPENCODE_INSTRUCTION_REF,
+      config.formattingOptions,
+    );
+  }
+
+  return applyOpencodeEdit(
+    raw,
+    ["instructions"],
+    [OPENCODE_INSTRUCTION_REF],
+    config.formattingOptions,
+  );
+}
+
+function applyOpencodeEdit(
+  raw: string,
+  jsonPath: JsonPath,
+  value: unknown,
+  formattingOptions: FormattingOptions,
+): string {
+  return applyEdits(raw, modify(raw, jsonPath, value, { formattingOptions }));
+}
+
+function writeChangedOpencodeConfigs(configs: OpencodeConfig[], nextContents: string[]): void {
+  configs.forEach((config, index) => {
+    const next = nextContents[index];
+    if (next === undefined || next === config.raw || (!config.exists && next === "")) {
+      return;
+    }
+
+    writeFileAtomically(config.path, next);
+    console.log(`Updated opencode instructions in ${config.path}`);
+  });
+}
+
+function writeOpencodeDoc(file: string, subagentModel: string): void {
+  writeFileAtomically(file, `${buildSibylInstructions(subagentModel)}\n`);
+  console.log(`Wrote instructions doc: ${file}`);
 }
 
 // Embeds the instructions inside sentinel markers followed by a do-not-edit notice. On
@@ -335,6 +579,28 @@ function removeDoc(file: string): void {
 
   fs.unlinkSync(file);
   console.log(`Removed instructions doc: ${file}`);
+}
+
+function writeFileAtomically(file: string, content: string): void {
+  ensureDir(file);
+
+  const directory = path.dirname(file);
+  const temporaryDirectory = fs.mkdtempSync(path.join(directory, `.${path.basename(file)}-`));
+  const temporaryFile = path.join(temporaryDirectory, "content");
+  const existingMode = fs.existsSync(file) ? fs.statSync(file).mode & 0o7777 : undefined;
+
+  try {
+    fs.writeFileSync(temporaryFile, content, {
+      encoding: "utf8",
+      mode: existingMode ?? 0o666,
+    });
+    if (existingMode !== undefined) {
+      fs.chmodSync(temporaryFile, existingMode);
+    }
+    fs.renameSync(temporaryFile, file);
+  } finally {
+    fs.rmSync(temporaryDirectory, { recursive: true, force: true });
+  }
 }
 
 function ensureDir(file: string): void {

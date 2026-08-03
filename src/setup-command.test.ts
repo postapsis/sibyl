@@ -12,6 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import fs from "fs";
 import os from "os";
 import path from "path";
+import { parse as parseJsonc } from "jsonc-parser";
 import { runSetup, runUninstall } from "./setup-command.ts";
 import { exit } from "./exit.ts";
 import {
@@ -99,20 +100,24 @@ describe("opencode target", () => {
     runSetup(["--opencode"]);
 
     expect(fs.existsSync(path.join(home, ".config", "opencode", "SIBYL.md"))).toBe(true);
+    expect(fs.existsSync(path.join(home, ".config", "opencode", "opencode.jsonc"))).toBe(true);
+    expect(fs.existsSync(path.join(home, ".config", "opencode", "opencode.json"))).toBe(false);
 
-    const config = JSON.parse(read(".config", "opencode", "opencode.json")) as {
+    const config = JSON.parse(read(".config", "opencode", "opencode.jsonc")) as {
       instructions: string[];
     };
     expect(config.instructions).toContain("~/.config/opencode/SIBYL.md");
     expect(fs.existsSync(path.join(home, ".claude"))).toBe(false);
   });
 
-  it("preserves existing keys/entries and does not duplicate on re-run", () => {
+  it("updates the only existing opencode.json and does not duplicate on re-run", () => {
     const jsonPath = path.join(home, ".config", "opencode", "opencode.json");
     fs.mkdirSync(path.dirname(jsonPath), { recursive: true });
     fs.writeFileSync(jsonPath, JSON.stringify({ theme: "dark", instructions: ["AGENTS.md"] }));
 
+    const before = fs.readFileSync(jsonPath, "utf8");
     runSetup(["--opencode"]);
+    const firstRun = fs.readFileSync(jsonPath, "utf8");
     runSetup(["--opencode"]);
 
     const config = JSON.parse(fs.readFileSync(jsonPath, "utf8")) as {
@@ -121,6 +126,127 @@ describe("opencode target", () => {
     };
     expect(config.theme).toBe("dark");
     expect(config.instructions).toEqual(["AGENTS.md", "~/.config/opencode/SIBYL.md"]);
+    expect(firstRun).not.toBe(before);
+    expect(fs.readFileSync(jsonPath, "utf8")).toBe(firstRun);
+    expect(fs.existsSync(path.join(home, ".config", "opencode", "opencode.jsonc"))).toBe(false);
+  });
+
+  it("updates an existing opencode.jsonc and preserves JSONC syntax", () => {
+    const jsoncPath = path.join(home, ".config", "opencode", "opencode.jsonc");
+    fs.mkdirSync(path.dirname(jsoncPath), { recursive: true });
+    fs.writeFileSync(
+      jsoncPath,
+      '{\n  // Keep this comment.\n  "theme": "dark",\n  "instructions": ["AGENTS.md",],\n}\n',
+    );
+
+    runSetup(["--opencode"]);
+
+    const raw = fs.readFileSync(jsoncPath, "utf8");
+    const config = parseJsonc(raw) as { theme: string; instructions: string[] };
+    expect(config.theme).toBe("dark");
+    expect(config.instructions).toEqual(["AGENTS.md", "~/.config/opencode/SIBYL.md"]);
+    expect(raw).toContain("// Keep this comment.");
+    expect(raw).toContain("  ],\n");
+    expect(fs.existsSync(path.join(home, ".config", "opencode", "opencode.json"))).toBe(false);
+  });
+
+  it("prefers opencode.jsonc when both config files exist", () => {
+    const directory = path.join(home, ".config", "opencode");
+    const jsonPath = path.join(directory, "opencode.json");
+    const jsoncPath = path.join(directory, "opencode.jsonc");
+    fs.mkdirSync(directory, { recursive: true });
+    fs.writeFileSync(jsonPath, JSON.stringify({ theme: "json", instructions: ["AGENTS.md"] }));
+    fs.writeFileSync(jsoncPath, '{\n  "theme": "jsonc",\n}\n');
+    const jsonBefore = fs.readFileSync(jsonPath, "utf8");
+
+    runSetup(["--opencode"]);
+
+    const jsonConfig = JSON.parse(fs.readFileSync(jsonPath, "utf8")) as {
+      instructions: string[];
+    };
+    const jsoncConfig = parseJsonc(fs.readFileSync(jsoncPath, "utf8")) as {
+      theme: string;
+      instructions: string[];
+    };
+    expect(jsonConfig.instructions).toEqual(["AGENTS.md"]);
+    expect(jsoncConfig.theme).toBe("jsonc");
+    expect(jsoncConfig.instructions).toEqual(["~/.config/opencode/SIBYL.md"]);
+    expect(fs.readFileSync(jsonPath, "utf8")).toBe(jsonBefore);
+  });
+
+  it("moves stale references from opencode.json into preferred opencode.jsonc", () => {
+    const directory = path.join(home, ".config", "opencode");
+    const jsonPath = path.join(directory, "opencode.json");
+    const jsoncPath = path.join(directory, "opencode.jsonc");
+    fs.mkdirSync(directory, { recursive: true });
+    fs.writeFileSync(jsonPath, JSON.stringify({ instructions: ["~/.config/opencode/SIBYL.md"] }));
+    fs.writeFileSync(jsoncPath, '{\n  // Preserve this comment.\n  "theme": "dark",\n}\n');
+
+    runSetup(["--opencode"]);
+
+    const jsonConfig = JSON.parse(fs.readFileSync(jsonPath, "utf8")) as {
+      instructions: string[];
+    };
+    const jsoncRaw = fs.readFileSync(jsoncPath, "utf8");
+    const jsoncConfig = parseJsonc(jsoncRaw) as { instructions: string[] };
+    expect(jsonConfig.instructions).toEqual([]);
+    expect(jsoncConfig.instructions).toEqual(["~/.config/opencode/SIBYL.md"]);
+    expect(jsoncRaw).toContain("// Preserve this comment.");
+  });
+
+  it("canonicalizes duplicate references across both config files", () => {
+    const directory = path.join(home, ".config", "opencode");
+    const jsonPath = path.join(directory, "opencode.json");
+    const jsoncPath = path.join(directory, "opencode.jsonc");
+    fs.mkdirSync(directory, { recursive: true });
+    fs.writeFileSync(
+      jsonPath,
+      JSON.stringify({
+        instructions: ["~/.config/opencode/SIBYL.md", "~/.config/opencode/SIBYL.md"],
+      }),
+    );
+    fs.writeFileSync(
+      jsoncPath,
+      '{\n  "instructions": [\n    "~/.config/opencode/SIBYL.md",\n    "~/.config/opencode/SIBYL.md",\n  ],\n}\n',
+    );
+
+    runSetup(["--opencode"]);
+
+    const jsonConfig = JSON.parse(fs.readFileSync(jsonPath, "utf8")) as {
+      instructions: string[];
+    };
+    const jsoncConfig = parseJsonc(fs.readFileSync(jsoncPath, "utf8")) as {
+      instructions: string[];
+    };
+    expect(jsonConfig.instructions).toEqual([]);
+    expect(jsoncConfig.instructions).toEqual(["~/.config/opencode/SIBYL.md"]);
+  });
+
+  it.each([
+    ["invalid JSONC", "opencode.jsonc", "{ invalid"],
+    ["invalid JSON", "opencode.json", "{ invalid"],
+  ])("does not change the OpenCode installation for %s", (_label, filename, content) => {
+    const configPath = path.join(home, ".config", "opencode", filename);
+    fs.mkdirSync(path.dirname(configPath), { recursive: true });
+    fs.writeFileSync(configPath, content);
+
+    expect(() => runSetup(["--opencode"])).toThrow("process.exit");
+
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(fs.readFileSync(configPath, "utf8")).toBe(content);
+    expect(fs.existsSync(path.join(home, ".config", "opencode", "SIBYL.md"))).toBe(false);
+  });
+
+  it("rejects a non-array instructions property without changing files", () => {
+    const jsoncPath = path.join(home, ".config", "opencode", "opencode.jsonc");
+    fs.mkdirSync(path.dirname(jsoncPath), { recursive: true });
+    fs.writeFileSync(jsoncPath, '{\n  "instructions": "not an array",\n}\n');
+
+    expect(() => runSetup(["--opencode"])).toThrow("process.exit");
+
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(fs.readFileSync(jsoncPath, "utf8")).toContain('"instructions": "not an array"');
+    expect(fs.existsSync(path.join(home, ".config", "opencode", "SIBYL.md"))).toBe(false);
   });
 });
 
@@ -284,6 +410,59 @@ describe("uninstall opencode target", () => {
     expect(JSON.parse(fs.readFileSync(jsonPath, "utf8"))).toEqual({ instructions: [] });
   });
 
+  it("removes every JSONC reference while preserving comments and other entries", () => {
+    const jsoncPath = path.join(home, ".config", "opencode", "opencode.jsonc");
+    const docPath = path.join(home, ".config", "opencode", "SIBYL.md");
+    fs.mkdirSync(path.dirname(jsoncPath), { recursive: true });
+    fs.writeFileSync(
+      jsoncPath,
+      '{\n  // Keep this comment.\n  "instructions": [\n    "AGENTS.md",\n    "~/.config/opencode/SIBYL.md",\n    "~/.config/opencode/SIBYL.md",\n  ],\n  "theme": "dark",\n}\n',
+    );
+    fs.writeFileSync(docPath, "manually modified instructions");
+
+    runUninstall(["--opencode"]);
+
+    const raw = fs.readFileSync(jsoncPath, "utf8");
+    expect(parseJsonc(raw)).toEqual({ instructions: ["AGENTS.md"], theme: "dark" });
+    expect(raw).toContain("// Keep this comment.");
+    expect(fs.existsSync(docPath)).toBe(false);
+  });
+
+  it("preserves comments and trailing commas beside removed JSONC references", () => {
+    const jsoncPath = path.join(home, ".config", "opencode", "opencode.jsonc");
+    fs.mkdirSync(path.dirname(jsoncPath), { recursive: true });
+    fs.writeFileSync(
+      jsoncPath,
+      '{\n  "instructions": [\n    "~/.config/opencode/SIBYL.md", // Keep this comment.\n    "AGENTS.md",\n    // Keep this comment too.\n    "~/.config/opencode/SIBYL.md", // And this one.\n  ],\n}\n',
+    );
+
+    runUninstall(["--opencode"]);
+
+    const raw = fs.readFileSync(jsoncPath, "utf8");
+    expect(parseJsonc(raw)).toEqual({ instructions: ["AGENTS.md"] });
+    expect(raw).toContain("// Keep this comment.");
+    expect(raw).toContain("// Keep this comment too.");
+    expect(raw).toContain("// And this one.");
+    expect(raw).toContain(", // And this one.");
+  });
+
+  it("removes references from both config files", () => {
+    const directory = path.join(home, ".config", "opencode");
+    const jsonPath = path.join(directory, "opencode.json");
+    const jsoncPath = path.join(directory, "opencode.jsonc");
+    const docPath = path.join(directory, "SIBYL.md");
+    fs.mkdirSync(directory, { recursive: true });
+    fs.writeFileSync(jsonPath, JSON.stringify({ instructions: ["~/.config/opencode/SIBYL.md"] }));
+    fs.writeFileSync(jsoncPath, '{\n  "instructions": ["~/.config/opencode/SIBYL.md",],\n}\n');
+    fs.writeFileSync(docPath, "manually modified instructions");
+
+    runUninstall(["--opencode"]);
+
+    expect(JSON.parse(fs.readFileSync(jsonPath, "utf8"))).toEqual({ instructions: [] });
+    expect(parseJsonc(fs.readFileSync(jsoncPath, "utf8"))).toEqual({ instructions: [] });
+    expect(fs.existsSync(docPath)).toBe(false);
+  });
+
   it("fails before deleting the doc when opencode JSON is invalid", () => {
     const jsonPath = path.join(home, ".config", "opencode", "opencode.json");
     const docPath = path.join(home, ".config", "opencode", "SIBYL.md");
@@ -298,6 +477,39 @@ describe("uninstall opencode target", () => {
     expect(exit).toHaveBeenCalledWith(1);
   });
 
+  it("fails before changing either config when opencode JSONC is invalid", () => {
+    const directory = path.join(home, ".config", "opencode");
+    const jsonPath = path.join(directory, "opencode.json");
+    const jsoncPath = path.join(directory, "opencode.jsonc");
+    const docPath = path.join(directory, "SIBYL.md");
+    fs.mkdirSync(directory, { recursive: true });
+    fs.writeFileSync(jsonPath, JSON.stringify({ instructions: ["~/.config/opencode/SIBYL.md"] }));
+    fs.writeFileSync(jsoncPath, "{ invalid");
+    fs.writeFileSync(docPath, "manually modified instructions");
+    const jsonBefore = fs.readFileSync(jsonPath, "utf8");
+
+    expect(() => runUninstall(["--opencode"])).toThrow("process.exit");
+
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(fs.readFileSync(jsonPath, "utf8")).toBe(jsonBefore);
+    expect(fs.readFileSync(jsoncPath, "utf8")).toBe("{ invalid");
+    expect(fs.existsSync(docPath)).toBe(true);
+  });
+
+  it("fails before deleting the doc when instructions is not an array", () => {
+    const jsoncPath = path.join(home, ".config", "opencode", "opencode.jsonc");
+    const docPath = path.join(home, ".config", "opencode", "SIBYL.md");
+    fs.mkdirSync(path.dirname(jsoncPath), { recursive: true });
+    fs.writeFileSync(jsoncPath, '{\n  "instructions": "not an array",\n}\n');
+    fs.writeFileSync(docPath, "manually modified instructions");
+
+    expect(() => runUninstall(["--opencode"])).toThrow("process.exit");
+
+    expect(exit).toHaveBeenCalledWith(1);
+    expect(fs.readFileSync(jsoncPath, "utf8")).toContain('"instructions": "not an array"');
+    expect(fs.existsSync(docPath)).toBe(true);
+  });
+
   it("deletes an existing doc when the config has no Sibyl reference", () => {
     const jsonPath = path.join(home, ".config", "opencode", "opencode.json");
     const docPath = path.join(home, ".config", "opencode", "SIBYL.md");
@@ -308,6 +520,16 @@ describe("uninstall opencode target", () => {
     runUninstall(["--opencode"]);
 
     expect(JSON.parse(fs.readFileSync(jsonPath, "utf8"))).toEqual({ theme: "dark" });
+    expect(fs.existsSync(docPath)).toBe(false);
+  });
+
+  it("deletes an existing doc when neither config file exists", () => {
+    const docPath = path.join(home, ".config", "opencode", "SIBYL.md");
+    fs.mkdirSync(path.dirname(docPath), { recursive: true });
+    fs.writeFileSync(docPath, "manually modified instructions");
+
+    runUninstall(["--opencode"]);
+
     expect(fs.existsSync(docPath)).toBe(false);
   });
 });

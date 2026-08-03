@@ -86,7 +86,7 @@ Shape: `SibylConfig` (`src/@types/sibyl-config.ts`) — `{ plugins: Partial<Reco
 `runSetup(args)` (`src/setup-command.ts`) installs the bundled instructions doc into an agent tool's **global** (user-level home-dir) instruction files. `runUninstall(args)` removes only those instruction integrations; it does not remove the Sibyl package, `~/.config/sibyl`, or plugins. Both commands parse per-target flags — at least one is required, else they print usage and `exit(1)` (also on an unknown flag or an `--other` with no path):
 
 - `--claude` → writes `~/.claude/SIBYL.md` and adds a `@SIBYL.md` import line to `~/.claude/CLAUDE.md`.
-- `--opencode` → writes `~/.config/opencode/SIBYL.md` and adds `~/.config/opencode/SIBYL.md` to the `instructions[]` array in `~/.config/opencode/opencode.json`.
+- `--opencode` → writes `~/.config/opencode/SIBYL.md` and adds `~/.config/opencode/SIBYL.md` to the `instructions[]` array in the selected `~/.config/opencode/opencode.json` or `opencode.jsonc`. Existing `opencode.jsonc` is preferred when both exist; if neither exists, setup creates `opencode.jsonc`. Setup moves stale Sibyl references into the selected file, while uninstall removes references from both files.
 - `--codex` → embeds the content into `~/.codex/AGENTS.md`.
 - `--antigravity` → embeds the content into `~/.gemini/GEMINI.md`.
 - `--other <file>` (repeatable; `--other=<file>` also accepted) → embeds the content into an arbitrary file.

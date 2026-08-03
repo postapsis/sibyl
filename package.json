@@ -70,6 +70,7 @@
     "ai": "^6.0.207",
     "cheerio": "^1.2.0",
     "defuddle": "^0.18.1",
+    "jsonc-parser": "^3.3.1",
     "linkedom": "^0.18.12",
     "ollama-ai-provider-v2": "^3.6.0",
     "turndown": "^7.2.4"
