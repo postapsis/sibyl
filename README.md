@@ -57,7 +57,7 @@ Get a working setup in a few steps:
      -p 11235:11235 \
      --shm-size=3g \
      --name crawl4ai \
-     unclecode/crawl4ai:latest
+     unclecode/crawl4ai:0.8.9
    ```
 
 4. Set up your agent to use Sibyl:
