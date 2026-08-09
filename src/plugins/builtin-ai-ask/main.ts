@@ -3,8 +3,7 @@
  * Since: 18/06/2026
  */
 import type { AskPlugin, FetchPlugin, PluginContext } from "../../@types/plugin.ts";
-
-const REQUEST_TIMEOUT_MS = 30_000;
+import { getPluginTimeout } from "../../utils.ts";
 
 const SYSTEM_PROMPT =
   "You answer the user's question using only the provided web page content. " +
@@ -97,7 +96,7 @@ async function askFn(src: string, query: string, context: PluginContext): Promis
       model,
       system: SYSTEM_PROMPT,
       prompt: `Web page content:\n\n${content}\n\nQuestion: ${query}`,
-      abortSignal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      abortSignal: AbortSignal.timeout(getPluginTimeout("ask")),
     });
 
     return text.trim();

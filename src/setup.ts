@@ -64,6 +64,18 @@ export function writeDefaultSibylConfig(): void {
         name: "SIBYL_SHOW_SEARCH_DESCRIPTION",
         value: "true",
       },
+      {
+        name: "SIBYL_SEARCH_TIMEOUT",
+        value: "10000",
+      },
+      {
+        name: "SIBYL_FETCH_TIMEOUT",
+        value: "10000",
+      },
+      {
+        name: "SIBYL_ASK_TIMEOUT",
+        value: "30000",
+      },
     ],
   };
 

@@ -34,20 +34,25 @@ function makeContext(fetchFn?: (url: string) => Promise<string>): PluginContext 
 
 const okContext = makeContext(async () => "page body content");
 
+let timeoutSpy: ReturnType<typeof vi.spyOn>;
 let envSnapshot: NodeJS.ProcessEnv;
 
 beforeEach(() => {
+  timeoutSpy = vi.spyOn(AbortSignal, "timeout").mockReturnValue(new AbortController().signal);
   envSnapshot = { ...process.env };
   process.env.SIBYL_AI_PROVIDER = "openai";
   process.env.SIBYL_MODEL_NAME = "gpt-test";
   process.env.OPENAI_API_KEY = "test-key";
   delete process.env.OLLAMA_BASE_URL;
+  delete process.env.SIBYL_ASK_TIMEOUT;
+  delete process.env.SIBYL_FETCH_TIMEOUT;
 
   mockedGenerateText.mockReset();
   resolveAnswer("the answer");
 });
 
 afterEach(() => {
+  timeoutSpy.mockRestore();
   vi.unstubAllGlobals();
   for (const key of Object.keys(process.env)) {
     if (!(key in envSnapshot)) delete process.env[key];
@@ -112,10 +117,11 @@ describe("builtin-ai-ask", () => {
     );
   });
 
-  it("sends the system prompt, content and question, with an abort signal", async () => {
+  it("uses the default generation timeout", async () => {
     const answer = await askFn("https://a.com", "what is it about?", okContext);
 
     expect(answer).toBe("the answer");
+    expect(timeoutSpy).toHaveBeenCalledWith(30_000);
     expect(mockedGenerateText).toHaveBeenCalledWith(
       expect.objectContaining({
         system: expect.stringContaining("Reply with just the answer"),
@@ -124,5 +130,19 @@ describe("builtin-ai-ask", () => {
       }),
     );
     expect(mockedGenerateText.mock.calls[0]?.[0]?.prompt).toContain("what is it about?");
+  });
+
+  it("uses the ask timeout rather than the fetch timeout for generation", async () => {
+    process.env.SIBYL_FETCH_TIMEOUT = "5678";
+    process.env.SIBYL_ASK_TIMEOUT = "12345";
+    const timeoutSignal = new AbortController().signal;
+    timeoutSpy.mockReturnValue(timeoutSignal);
+
+    await askFn("https://a.com", "what is it about?", okContext);
+
+    expect(timeoutSpy).toHaveBeenCalledWith(12345);
+    expect(mockedGenerateText).toHaveBeenCalledWith(
+      expect.objectContaining({ abortSignal: timeoutSignal }),
+    );
   });
 });

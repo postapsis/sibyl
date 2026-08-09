@@ -3,6 +3,7 @@
  * Since: 12/06/2026
  */
 import type { FetchPlugin, ParsePlugin, PluginContext } from "../../@types/plugin.ts";
+import { getPluginTimeout } from "../../utils.ts";
 
 interface Result {
   url: string;
@@ -15,8 +16,6 @@ interface Crawl4AiResult {
   success: boolean;
   results?: Result[];
 }
-
-const REQUEST_TIMEOUT_MS = 10_000;
 
 async function fetchFn(url: string, context: PluginContext): Promise<string> {
   const crawl4AiUrl = process.env.SIBYL_CRAWL4AI_URL ?? "http://localhost:11235";
@@ -57,7 +56,7 @@ async function fetchFn(url: string, context: PluginContext): Promise<string> {
             : {}),
         },
       }),
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      signal: AbortSignal.timeout(getPluginTimeout("fetch")),
     });
   } catch (err) {
     console.warn(
