@@ -1,6 +1,6 @@
 {
   "name": "@postapsis/sibyl",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Give your AI Agent the web, without the bloat — extensible and lightweight by design 🕷️",
   "type": "module",
   "packageManager": "pnpm@11.5.1",

@@ -121,7 +121,7 @@ describe("dispatch & argument validation", () => {
   it.each([["--version"], ["version"]])("prints version for %s", async (arg) => {
     await main([arg]);
 
-    expect(console.log).toHaveBeenCalledWith("sibyl 0.1.2");
+    expect(console.log).toHaveBeenCalledWith("sibyl 0.1.3");
     expect(exit).not.toHaveBeenCalled();
   });
 
