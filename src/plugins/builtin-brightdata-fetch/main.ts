@@ -3,8 +3,7 @@
  * Since: 06/06/2026
  */
 import type { FetchPlugin, ParsePlugin, PluginContext } from "../../@types/plugin.ts";
-
-const REQUEST_TIMEOUT_MS = 10_000;
+import { getPluginTimeout } from "../../utils.ts";
 
 async function fetchFn(url: string, context: PluginContext): Promise<string> {
   const apiKey = process.env.BRIGHTDATA_API_KEY;
@@ -28,7 +27,7 @@ async function fetchFn(url: string, context: PluginContext): Promise<string> {
       url,
       format: "raw",
     }),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: AbortSignal.timeout(getPluginTimeout("fetch")),
   });
 
   if (!res.ok) {

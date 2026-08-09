@@ -5,6 +5,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   collapseBlankLines,
+  getPluginTimeout,
   getSearchResultsLimit,
   isValidHttpUrl,
   shouldShowSearchDescription,
@@ -81,6 +82,64 @@ describe("collapseBlankLines", () => {
     ["", ""],
   ])("leaves %j unchanged", (input, expected) => {
     expect(collapseBlankLines(input)).toBe(expected);
+  });
+});
+
+describe("getPluginTimeout", () => {
+  let envSnapshot: NodeJS.ProcessEnv;
+
+  beforeEach(() => {
+    envSnapshot = { ...process.env };
+    delete process.env.SIBYL_SEARCH_TIMEOUT;
+    delete process.env.SIBYL_FETCH_TIMEOUT;
+    delete process.env.SIBYL_ASK_TIMEOUT;
+  });
+
+  afterEach(() => {
+    for (const key of Object.keys(process.env)) {
+      if (!(key in envSnapshot)) delete process.env[key];
+    }
+    Object.assign(process.env, envSnapshot);
+  });
+
+  it.each([
+    ["search", 10_000],
+    ["fetch", 10_000],
+    ["ask", 30_000],
+  ] as const)("uses the current default when the %s timeout is unset", (type, expected) => {
+    expect(getPluginTimeout(type)).toBe(expected);
+  });
+
+  it.each([
+    ["search", "1", 1],
+    ["fetch", "1234", 1234],
+    ["ask", "2147483647", 2_147_483_647],
+  ] as const)("parses the configured %s timeout", (type, value, expected) => {
+    process.env[`SIBYL_${type.toUpperCase()}_TIMEOUT`] = value;
+
+    expect(getPluginTimeout(type)).toBe(expected);
+  });
+
+  it("allows surrounding whitespace around a configured timeout", () => {
+    process.env.SIBYL_SEARCH_TIMEOUT = " 1234 ";
+
+    expect(getPluginTimeout("search")).toBe(1234);
+  });
+
+  it.each([
+    ["SIBYL_SEARCH_TIMEOUT", "0", "search"],
+    ["SIBYL_FETCH_TIMEOUT", "-1", "fetch"],
+    ["SIBYL_ASK_TIMEOUT", "1.5", "ask"],
+    ["SIBYL_SEARCH_TIMEOUT", "abc", "search"],
+    ["SIBYL_FETCH_TIMEOUT", "1234ms", "fetch"],
+    ["SIBYL_ASK_TIMEOUT", "2e3", "ask"],
+    ["SIBYL_SEARCH_TIMEOUT", "2147483648", "search"],
+  ] as const)("rejects invalid %s value %j", (envName, value, type) => {
+    process.env[envName] = value;
+
+    expect(() => getPluginTimeout(type)).toThrow(
+      `Invalid \`${envName}\`: expected an integer between 1 and 2147483647 milliseconds.`,
+    );
   });
 });
 

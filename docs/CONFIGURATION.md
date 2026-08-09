@@ -16,6 +16,18 @@ Sibyl reads its configuration from `~/.config/sibyl/config.json`, created with s
     {
       "name": "SIBYL_SHOW_SEARCH_DESCRIPTION",
       "value": "true"
+    },
+    {
+      "name": "SIBYL_SEARCH_TIMEOUT",
+      "value": "10000"
+    },
+    {
+      "name": "SIBYL_FETCH_TIMEOUT",
+      "value": "10000"
+    },
+    {
+      "name": "SIBYL_ASK_TIMEOUT",
+      "value": "30000"
     }
   ]
 }
@@ -50,6 +62,21 @@ settings (e.g., API keys) that plugins read via `process.env`.
 Precedence: **Variable in the configuration file wins over the environment.** A variable defined here overrides any existing environment variable of
 the same name; anything not listed here falls back to the real environment. For example, a plugin reading
 `process.env.EXA_API_KEY` gets the configuration value if present, otherwise whatever was exported in your shell.
+
+### Timeout variables
+
+Timeout values are configured in milliseconds. Each variable is optional; when it is absent from both the configuration and
+the environment, Sibyl uses its current default.
+
+| Variable               | Default              | Description                                                |
+| ---------------------- | -------------------- | ---------------------------------------------------------- |
+| `SIBYL_SEARCH_TIMEOUT` | `10000` (10 seconds) | Timeout for HTTP requests made by built-in search plugins. |
+| `SIBYL_FETCH_TIMEOUT`  | `10000` (10 seconds) | Timeout for HTTP requests made by built-in fetch plugins.  |
+| `SIBYL_ASK_TIMEOUT`    | `30000` (30 seconds) | Timeout for LLM generation by the built-in ask plugin.     |
+
+Values must be integers from `1` through `2147483647` milliseconds. Invalid values cause the selected plugin call to fail.
+The ask plugin fetches the URL first, so that request uses `SIBYL_FETCH_TIMEOUT`; `SIBYL_ASK_TIMEOUT` applies only to
+LLM generation. Parse plugins are not timed, and custom plugins are not automatically timed.
 
 ## Plugin environment variables
 

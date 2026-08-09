@@ -3,7 +3,7 @@
  * Since: 13/06/2026
  */
 import type { FetchPlugin, ParsePlugin, PluginContext } from "../../@types/plugin.ts";
-import { collapseBlankLines } from "../../utils.ts";
+import { collapseBlankLines, getPluginTimeout } from "../../utils.ts";
 
 interface FirecrawlFetchResponse {
   success: boolean;
@@ -12,8 +12,6 @@ interface FirecrawlFetchResponse {
     rawHtml?: string;
   };
 }
-
-const REQUEST_TIMEOUT_MS = 10_000;
 
 async function fetchFn(url: string, context: PluginContext): Promise<string> {
   const apiKey = process.env.FIRECRAWL_API_KEY;
@@ -31,7 +29,7 @@ async function fetchFn(url: string, context: PluginContext): Promise<string> {
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({ url, formats: [format] }),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: AbortSignal.timeout(getPluginTimeout("fetch")),
   });
 
   if (!res.ok) {

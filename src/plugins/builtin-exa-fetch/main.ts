@@ -3,6 +3,7 @@
  * Since: 06/06/2026
  */
 import type { FetchPlugin } from "../../@types/plugin.ts";
+import { getPluginTimeout } from "../../utils.ts";
 
 interface ExaContentResult {
   url: string;
@@ -13,8 +14,6 @@ interface ExaContentResult {
 interface ExaContentsResponse {
   results: ExaContentResult[];
 }
-
-const REQUEST_TIMEOUT_MS = 10_000;
 
 async function fetchFn(url: string): Promise<string> {
   const apiKey = process.env.EXA_API_KEY;
@@ -32,7 +31,7 @@ async function fetchFn(url: string): Promise<string> {
       urls: [url],
       text: true,
     }),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: AbortSignal.timeout(getPluginTimeout("fetch")),
   });
 
   if (!res.ok) {

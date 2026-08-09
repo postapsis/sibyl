@@ -32,14 +32,18 @@ function stubFetch(res: unknown) {
   return mock;
 }
 
+let timeoutSpy: ReturnType<typeof vi.spyOn>;
 let envSnapshot: NodeJS.ProcessEnv;
 
 beforeEach(() => {
+  timeoutSpy = vi.spyOn(AbortSignal, "timeout").mockReturnValue(new AbortController().signal);
   envSnapshot = { ...process.env };
   process.env.EXA_API_KEY = "test-key";
+  delete process.env.SIBYL_FETCH_TIMEOUT;
 });
 
 afterEach(() => {
+  timeoutSpy.mockRestore();
   vi.unstubAllGlobals();
   for (const key of Object.keys(process.env)) {
     if (!(key in envSnapshot)) delete process.env[key];
@@ -48,15 +52,25 @@ afterEach(() => {
 });
 
 describe("builtin-exa-fetch", () => {
-  it("an AbortSignal is present on the fetch", async () => {
+  it("uses the default timeout for the fetch", async () => {
     const fetchMock = stubFetch(makeResponse({ json: { results: [] } }));
 
     await fetchFn("https://a.com", context);
 
+    expect(timeoutSpy).toHaveBeenCalledWith(10_000);
     expect(fetchMock).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
+  });
+
+  it("uses the configured timeout for the fetch", async () => {
+    process.env.SIBYL_FETCH_TIMEOUT = "1234";
+    stubFetch(makeResponse({ json: { results: [] } }));
+
+    await fetchFn("https://a.com", context);
+
+    expect(timeoutSpy).toHaveBeenCalledWith(1234);
   });
 
   it("throws when `EXA_API_KEY` is missing", async () => {

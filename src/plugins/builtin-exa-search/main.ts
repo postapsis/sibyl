@@ -3,7 +3,11 @@
  * Since: 06/06/2026
  */
 import type { SearchPlugin } from "../../@types/plugin.ts";
-import { getSearchResultsLimit, shouldShowSearchDescription } from "../../utils.ts";
+import {
+  getPluginTimeout,
+  getSearchResultsLimit,
+  shouldShowSearchDescription,
+} from "../../utils.ts";
 
 interface ExaResult {
   title: string | null;
@@ -14,8 +18,6 @@ interface ExaResult {
 interface ExaResponse {
   results: ExaResult[];
 }
-
-const REQUEST_TIMEOUT_MS = 10_000;
 
 async function searchFn(query: string) {
   const apiKey = process.env.EXA_API_KEY;
@@ -40,7 +42,7 @@ async function searchFn(query: string) {
         highlights: showDescription,
       },
     }),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: AbortSignal.timeout(getPluginTimeout("search")),
   });
 
   if (!res.ok) {

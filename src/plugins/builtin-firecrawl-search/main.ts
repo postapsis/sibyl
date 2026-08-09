@@ -3,7 +3,11 @@
  * Since: 13/06/2026
  */
 import type { SearchPlugin } from "../../@types/plugin.ts";
-import { getSearchResultsLimit, shouldShowSearchDescription } from "../../utils.ts";
+import {
+  getPluginTimeout,
+  getSearchResultsLimit,
+  shouldShowSearchDescription,
+} from "../../utils.ts";
 
 interface FirecrawlWebResult {
   url: string;
@@ -18,8 +22,6 @@ interface FirecrawlSearchResponse {
   creditsUsed: number;
   id: string;
 }
-
-const REQUEST_TIMEOUT_MS = 10_000;
 
 async function searchFn(query: string) {
   const apiKey = process.env.FIRECRAWL_API_KEY;
@@ -37,7 +39,7 @@ async function searchFn(query: string) {
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({ query, limit }),
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: AbortSignal.timeout(getPluginTimeout("search")),
   });
 
   if (!res.ok) {

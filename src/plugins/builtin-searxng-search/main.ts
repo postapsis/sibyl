@@ -4,6 +4,7 @@
  */
 import type { SearchPlugin } from "../../@types/plugin.ts";
 import {
+  getPluginTimeout,
   getSearchResultsLimit,
   shouldShowSearchDescription,
   stripSearchResultDatePrefix,
@@ -21,8 +22,6 @@ interface SearXngResult {
   results: Result[];
 }
 
-const REQUEST_TIMEOUT_MS = 10_000;
-
 async function searchFn(query: string) {
   const searxngUrl = process.env.SIBYL_SEARXNG_URL ?? "http://localhost:8080";
   const showDescription = shouldShowSearchDescription();
@@ -38,7 +37,7 @@ async function searchFn(query: string) {
 
   try {
     res = await fetch(`${searxngUrl}/search?${params.toString()}`, {
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      signal: AbortSignal.timeout(getPluginTimeout("search")),
     });
   } catch (err) {
     console.warn(

@@ -25,6 +25,47 @@ export function collapseBlankLines(markdown: string): string {
   return markdown.replace(/\n{2,}/g, "\n").trim();
 }
 
+const DEFAULT_PLUGIN_TIMEOUTS = {
+  search: 10_000,
+  fetch: 10_000,
+  ask: 30_000,
+} as const;
+
+const PLUGIN_TIMEOUT_ENV_NAMES = {
+  search: "SIBYL_SEARCH_TIMEOUT",
+  fetch: "SIBYL_FETCH_TIMEOUT",
+  ask: "SIBYL_ASK_TIMEOUT",
+} as const;
+
+const MAX_PLUGIN_TIMEOUT_MS = 2_147_483_647;
+
+type TimeoutPluginType = keyof typeof DEFAULT_PLUGIN_TIMEOUTS;
+
+export function getPluginTimeout(type: TimeoutPluginType): number {
+  const envName = PLUGIN_TIMEOUT_ENV_NAMES[type];
+  const raw = process.env[envName];
+
+  if (raw === undefined) {
+    return DEFAULT_PLUGIN_TIMEOUTS[type];
+  }
+
+  const value = raw.trim();
+  const timeout = Number(value);
+
+  if (
+    !/^\d+$/.test(value) ||
+    !Number.isSafeInteger(timeout) ||
+    timeout < 1 ||
+    timeout > MAX_PLUGIN_TIMEOUT_MS
+  ) {
+    throw new Error(
+      `Invalid \`${envName}\`: expected an integer between 1 and ${MAX_PLUGIN_TIMEOUT_MS} milliseconds.`,
+    );
+  }
+
+  return timeout;
+}
+
 // Maximum number of results a search plugin should return. Read from
 // `SIBYL_SEARCH_RESULTS_LIMIT`, falling back to 10 when unset or
 // invalid (non-numeric, floating point or <= 0).
