@@ -91,7 +91,7 @@ export async function main(argv: string[]): Promise<void> {
       break;
     case "--version":
     case "version":
-      console.log("sibyl 0.1.2");
+      console.log("sibyl 0.1.3");
       break;
     default:
       console.error(`Unknown command: ${command}`);
